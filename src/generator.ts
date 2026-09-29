@@ -4,7 +4,7 @@ import { extractAddress, hexCount } from "./lib/address";
 import { describeError, getClient, MAX_DOWNLOAD_BYTES } from "./lib/client";
 import { formatBytes, formatExactBytes } from "./lib/format";
 import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBaseUrl, type PageView } from "./lib/params";
-import { htmlSnippet, markdownSnippet, type ButtonStyle } from "./lib/snippets";
+import { buttonLabel, htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
 import { $, bindCopy } from "./lib/ui";
 
 // Samples from try.autonomi.com ("Try one of these").
@@ -63,7 +63,7 @@ function tidyAddress(): void {
     onAddressInput();
   }
 }
-document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"]').forEach((el) =>
+document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"], #show-name').forEach((el) =>
   el.addEventListener("change", render),
 );
 
@@ -195,6 +195,12 @@ function currentSize(): number | undefined {
   return check.status === "ok" ? check.size : undefined;
 }
 
+/** Size, plus the file name when "Show the file name on the button" is on. */
+function snippetOptions(): SnippetOptions {
+  const showName = $<HTMLInputElement>("show-name").checked;
+  return { size: currentSize(), fileName: showName ? fileName() || undefined : undefined };
+}
+
 function downloadUrl(): string | null {
   const addr = address();
   if (!addr) return null;
@@ -205,7 +211,7 @@ function renderPreview(): void {
   const style = radio<ButtonStyle>("style");
   const host = radio<"light" | "dark">("host");
   const url = downloadUrl() ?? buildDownloadUrl(siteBase, { address: SAMPLES.lucky.address, name: "example.zip" });
-  const snippet = htmlSnippet(style, url, currentSize());
+  const snippet = htmlSnippet(style, url, snippetOptions());
   const [bg, fg, muted] = host === "dark" ? ["#15181e", "#e8eaee", "#8b93a1"] : ["#ffffff", "#1f2328", "#6b7280"];
   const doc = `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>
     html,body{margin:0;height:100%}
@@ -243,9 +249,9 @@ function renderEmbed(): void {
 
   $("embed-warning").hidden = check.status === "ok";
   const style = radio<ButtonStyle>("style");
-  const size = currentSize();
-  $<HTMLTextAreaElement>("out-html").value = htmlSnippet(style, url, size);
-  $<HTMLTextAreaElement>("out-md").value = markdownSnippet(url, size);
+  const options = snippetOptions();
+  $<HTMLTextAreaElement>("out-html").value = htmlSnippet(style, url, options);
+  $<HTMLTextAreaElement>("out-md").value = markdownSnippet(url, options);
   $<HTMLInputElement>("out-link").value = url;
   $<HTMLAnchorElement>("open-link").href = url;
 }
@@ -258,6 +264,7 @@ for (const id of ["out-html", "out-md", "out-link"]) {
 }
 
 function render(): void {
+  $("show-name-example").textContent = `“${buttonLabel(fileName() || "my-mod-v1.2.zip")}”`;
   renderCheck();
   renderPreview();
   renderEmbed();

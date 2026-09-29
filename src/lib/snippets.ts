@@ -5,6 +5,14 @@ export const BUTTON_STYLES: readonly ButtonStyle[] = ["light", "dark", "minimal"
 
 export const BUTTON_LABEL = "Download from Autonomi";
 export const BUTTON_TITLE = "Free to download. Served by the Autonomi network, not this site.";
+/** Longer names are shortened in the middle so the version and extension stay visible. */
+export const MAX_LABEL_NAME = 40;
+
+export interface SnippetOptions {
+  size?: number;
+  /** When set, the label reads "Download <name> from Autonomi". */
+  fileName?: string;
+}
 
 // Colours from Autonomi's public palette: navy #131c32, indigo #232a59, red #e91337, mint #97ffa0.
 const BASE =
@@ -21,15 +29,36 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (c) => ENTITIES[c]);
 }
 
+/** Backslash-escape characters that Markdown would treat as formatting inside link text. */
+export function escapeMarkdown(text: string): string {
+  return text.replace(/[\\`*_[\]<>]/g, (c) => `\\${c}`);
+}
+
+/** "a-very-long-file-name-for-my-mod-v1.2.zip" → "a-very-long-file-na…my-mod-v1.2.zip" */
+export function shortenName(name: string, max = MAX_LABEL_NAME): string {
+  const chars = Array.from(name);
+  if (chars.length <= max) return name;
+  const tail = Math.ceil((max - 1) / 2);
+  const head = max - 1 - tail;
+  return `${chars.slice(0, head).join("")}…${chars.slice(-tail).join("")}`;
+}
+
+export function buttonLabel(fileName?: string): string {
+  return fileName ? `Download ${shortenName(fileName)} from Autonomi` : BUTTON_LABEL;
+}
+
 const sizeLabel = (size?: number) => (size === undefined ? "" : formatBytes(size, { compact: true }));
 
-export function htmlSnippet(style: ButtonStyle, url: string, size?: number): string {
+export function htmlSnippet(style: ButtonStyle, url: string, { size, fileName }: SnippetOptions = {}): string {
   const href = escapeHtml(url);
-  const label = sizeLabel(size);
-  const attrs = `href="${href}" target="_blank" rel="noopener" title="${escapeHtml(BUTTON_TITLE)}"`;
+  const sizeText = sizeLabel(size);
+  const label = escapeHtml(buttonLabel(fileName));
+  // A shortened name is still readable in full on hover.
+  const title = fileName && shortenName(fileName) !== fileName ? `${fileName}. ${BUTTON_TITLE}` : BUTTON_TITLE;
+  const attrs = `href="${href}" target="_blank" rel="noopener" title="${escapeHtml(title)}"`;
 
   if (style === "minimal") {
-    return `<a ${attrs} style="text-decoration:underline">${BUTTON_LABEL}${label ? ` (${label})` : ""}</a>`;
+    return `<a ${attrs} style="text-decoration:underline">${label}${sizeText ? ` (${sizeText})` : ""}</a>`;
   }
 
   const theme = THEMES[style];
@@ -37,14 +66,14 @@ export function htmlSnippet(style: ButtonStyle, url: string, size?: number): str
     `<a ${attrs}`,
     `   style="${BASE};${theme.box}">`,
     `  <span aria-hidden="true" style="color:${theme.arrow}">⬇</span>`,
-    `  <span>${BUTTON_LABEL}</span>`,
+    `  <span>${label}</span>`,
   ];
-  if (label) lines.push(`  <span style="font-weight:400;opacity:.7">· ${label}</span>`);
+  if (sizeText) lines.push(`  <span style="font-weight:400;opacity:.7">· ${sizeText}</span>`);
   lines.push(`</a>`);
   return lines.join("\n");
 }
 
-export function markdownSnippet(url: string, size?: number): string {
-  const label = sizeLabel(size);
-  return `[⬇ ${BUTTON_LABEL}${label ? ` (${label})` : ""}](${url})`;
+export function markdownSnippet(url: string, { size, fileName }: SnippetOptions = {}): string {
+  const sizeText = sizeLabel(size);
+  return `[⬇ ${escapeMarkdown(buttonLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}](${url})`;
 }

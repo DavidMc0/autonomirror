@@ -9,7 +9,7 @@ This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https:/
 ## How it works
 
 1. **The generator (`/`).** Paste the address of a public file (from `ant file upload --public`) and give it a file name. The page connects to Autonomi, checks that the file exists and reads its verified size. It then gives you:
-   - an HTML button (Light, Dark or Minimal link) with inline styles only;
+   - an HTML button (Light, Dark or Minimal link) with inline styles only, optionally showing the file name ("Download lucky.jpg from Autonomi") so several files on one page are easy to tell apart;
    - a Markdown link for READMEs;
    - a plain link.
 2. **The button** is an ordinary link to the download page. It never loads the SDK on your site, so it works anywhere links do: websites, CMSs, READMEs and forums.
