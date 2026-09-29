@@ -215,7 +215,7 @@ function renderPreview(): void {
     p{margin:0;color:${muted}}
   </style></head><body>
     <h3>${escapeText(fileName() || "my-mod-v1.2.zip")}</h3>
-    <p>The latest release, with all the fixes from the beta.</p>
+    <p>Example text on your page. Your button goes wherever you paste the code.</p>
     <div>${snippet}</div>
   </body></html>`;
   const frame = $<HTMLIFrameElement>("preview");
