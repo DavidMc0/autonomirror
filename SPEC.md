@@ -284,7 +284,84 @@ If the demo is deployed under a sub-path (for example GitHub Pages at `/<repo>/`
 
 ## 12. Stretch goals (only after the acceptance criteria pass)
 
-- An optional `button.js` that upgrades plain links on a host page with live size and styling.
+- A self-contained script button that downloads on the publisher's own page. See section 13.
 - An SVG badge for READMEs.
 - Streamed saving on Chromium (`openFile().stream()` into a `FileSystemWritableFileStream`) to avoid holding large files in memory.
 - A "copy SHA-256" line computed after download, for sites that publish SHA-256 checksums.
+
+---
+
+## 13. Possible future addition: self-contained script button
+
+**Status:** not built. It was proposed after the demo went live (2026-09-29) and is recorded here for a later decision.
+
+### The problem it solves
+
+Every link button depends on the demo site. The button is a plain link to `https://<demo-host>/d/?…`, and that page serves the download code (HTML, JS and the ~5 MB WASM engine). The file itself lives on Autonomi, but visitors can't reach it through the button if the demo host is unavailable. That can happen if:
+
+- the host is down, or the site is moved, renamed or taken offline;
+- a free host's bandwidth limit is reached (each download-page visit loads about 2 MB);
+- the demo host's domain changes.
+
+A custom domain reduces this risk but doesn't remove it: someone still has to keep the page hosted.
+
+### The idea
+
+A web component that the publisher adds to their own page. It downloads, verifies and saves the file right there, without sending the visitor to the demo site.
+
+```html
+<script type="module" src="https://<wherever>/autonomi-button.js"></script>
+<autonomi-download address="<64 hex>" name="my-mod-v1.2.zip" size="312400000" theme="light">
+  <!-- Fallback when scripts are blocked: the ordinary link button from section 6. -->
+  <a href="https://<demo-host>/d/?a=…&n=…">Download from Autonomi</a>
+</autonomi-download>
+```
+
+### Why it may make sense
+
+- **No dependency on the demo host.** If the publisher self-hosts the script, buttons keep working even if the demo site disappears. The only remaining dependency is the Autonomi network.
+- **Visitors stay on the publisher's page.** There's no extra tab or unfamiliar domain, which feels more trustworthy.
+- **Better privacy.** Nothing touches a third-party site. Visitors who don't click load nothing and connect to no nodes (see the lazy loading below).
+- **No hosting cost for the demo** as buttons spread, because each publisher serves their own copy.
+- **It matches the "no server in the middle" pitch more literally.**
+
+### Delivery options (offer both)
+
+| Option | How | Trade-off |
+| --- | --- | --- |
+| Self-hosted | A single `autonomi-button.js` with the WASM included, downloadable from the generator. The publisher uploads it next to their files. | Fully independent. The publisher must replace the file when Autonomi's seeds or protocol change. |
+| npm CDN | Publish as an npm package and load a pinned version from jsDelivr (or unpkg). | Durable, and versions never change once published. Updates reach publishers only when they move to a newer version. |
+
+### SDK support (checked against `@withautonomi/ant-browser-sdk` 0.1.0)
+
+- **The engine can be passed in directly.** `ClientOptions.wasm` accepts a `WasmSource`, so the WASM can be bundled into one file instead of loaded from a path next to the script.
+- **The save dialog can open before anything loads.** The component calls `showSaveFilePicker()` as the first action in its click handler, then loads the SDK, connects, and calls `downloadAndSave(address, { fileHandle })`. `SaveOptions.fileHandle` lets the SDK write to the location already chosen. Without the picker (Firefox and Safari), it falls back to an ordinary `<a download>` save.
+- **Only downloads are needed.** The upload worker isn't used, so it can be left out of the bundle.
+
+### Lazy loading
+
+The engine (about 2 MB compressed) loads only when someone clicks. Optionally, loading and connecting can start on hover or focus to save a few seconds. There are no WebRTC connections for visitors who don't show intent.
+
+### Limits (document these in the generator)
+
+- **Scripts must be allowed.** GitHub READMEs, forums and most hosted CMSs strip them, so the link button stays the universal option. This is an "advanced" choice for people who run their own sites.
+- **Strict security policies may block it.** A Content Security Policy that doesn't allow `'wasm-unsafe-eval'` blocks the engine, and some policies restrict WebRTC. The component should detect the failure and reveal the fallback link.
+- **Not inside iframes.** Cross-origin iframes block the save dialog, and an iframe embed would still depend on the demo host, so iframes aren't used.
+- **The same limits as the download page apply:** HTTPS, 1 GB maximum, the whole file in memory, and networks that block UDP won't work.
+- **Truly host-free isn't possible.** The engine code must be served from somewhere, because a browser can't load code from Autonomi without already running it.
+
+### Generator changes
+
+- Add an "Advanced: script button" tab next to the HTML, Markdown and link outputs.
+- The tab gives the two-line snippet, including the fallback link.
+- It offers a download of `autonomi-button.js`, and the CDN URL once the package is published.
+- It explains when to use this instead of the link button.
+
+### Acceptance criteria
+
+- [ ] On a plain HTTPS page on another origin, the component downloads and saves the small test file, and the saved file is byte-identical to the original. Test in Chrome, Firefox and Safari.
+- [ ] Before anyone clicks, the page loads no WASM and opens no WebRTC connections (check the Network tab).
+- [ ] With scripts disabled, or with a CSP that blocks WebAssembly, the fallback link is shown and works.
+- [ ] With the self-hosted file, a download completes with the demo host blocked entirely.
+
+**Rough effort:** about half a day on top of the existing `src/lib/*` helpers, plus npm publishing if the CDN option is wanted.
