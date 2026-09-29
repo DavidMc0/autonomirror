@@ -66,10 +66,8 @@
   color: #ff6b82;
   font: 600 13px/1 var(--mono);
 }
-@media (prefers-color-scheme: light) {
-  .step-num {
-    color: var(--accent);
-  }
+[data-theme="light"] .step-num {
+  color: var(--accent);
 }
 .gen-embed.is-ready .step-num {
   background: var(--ok-soft);

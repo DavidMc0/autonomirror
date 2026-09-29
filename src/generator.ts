@@ -6,6 +6,9 @@ import { formatBytes, formatExactBytes } from "./lib/format";
 import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBaseUrl, type PageView } from "./lib/params";
 import { buttonLabel, htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
 import { $, bindCopy } from "./lib/ui";
+import { initThemeToggle } from "./lib/theme";
+
+initThemeToggle();
 
 // Samples from try.autonomi.com ("Try one of these").
 const SAMPLES: Record<string, { address: string; name: string }> = {

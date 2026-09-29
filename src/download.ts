@@ -8,6 +8,9 @@ import { formatBytes, formatExactBytes } from "./lib/format";
 import { parseDownloadParams, type DownloadParams } from "./lib/params";
 import { chunkCountFromMessage, readProgress } from "./lib/progress";
 import { $, applyState, bindCopy, setText } from "./lib/ui";
+import { initThemeToggle } from "./lib/theme";
+
+initThemeToggle();
 
 type State = "invalid" | "connecting" | "ready" | "downloading" | "done" | "blocked" | "error";
 

@@ -6,8 +6,17 @@
     <title>Autonomi Download</title>
     <meta name="description" content="Download a file directly from the Autonomi network, in your browser." />
     <meta name="referrer" content="no-referrer" />
-    <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1020" />
+    <script>
+      // Apply the saved or system theme before first paint to avoid a flash.
+      (function () {
+        var saved;
+        try { saved = localStorage.getItem("theme"); } catch (e) {}
+        var theme = saved === "light" || saved === "dark" ? saved : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]').content = theme === "light" ? "#f3f5f9" : "#0a1020";
+      })();
+    </script>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23e91337'/%3E%3Cpath d='M16 8v12m-5-5 5 5 5-5M10 24h12' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   </head>
   <body>
@@ -16,7 +25,13 @@
         <span class="brand-mark" aria-hidden="true">⬇</span>
         <span>Download Button <span class="brand-sub">· Autonomi demo</span></span>
       </a>
-      <a class="topbar-link" href="../">Make your own button</a>
+      <div class="topbar-actions">
+        <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Switch to light mode" title="Switch to light mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" /></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z" /></svg>
+        </button>
+        <a class="topbar-link" href="../"><span class="label-long">Make your own button</span><span class="label-short">Make your own</span></a>
+      </div>
     </header>
 
     <main id="app" data-state="connecting">
