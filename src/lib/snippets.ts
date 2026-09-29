@@ -9,7 +9,7 @@ export const BUTTON_TITLE = "Free to download. Served by the Autonomi network, n
 // Colours from Autonomi's public palette: navy #131c32, indigo #232a59, red #e91337, mint #97ffa0.
 const BASE =
   "display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;" +
-  "font:600 15px/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none";
+  "font:600 15px/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none;white-space:nowrap";
 const THEMES = {
   light: { box: "background:#ffffff;color:#131c32;border:1px solid #c5cdd7", arrow: "#e91337" },
   dark: { box: "background:#131c32;color:#ffffff;border:1px solid #232a59", arrow: "#97ffa0" },

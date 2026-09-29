@@ -158,8 +158,14 @@
         </div>
       </section>
 
-      <section class="how" aria-labelledby="how-title" data-hide="invalid">
-        <h2 id="how-title" class="how-title">How this works</h2>
+      <p class="fineprint" data-hide="invalid">
+        Fetched peer-to-peer by your browser; the nodes serving it can see your IP address.<br />
+        <a href="#how" id="show-how">How this works</a><span class="sep">·</span>Powered by
+        <a href="https://autonomi.com/?ref=download-button-demo" target="_blank" rel="noopener">Autonomi</a>
+      </p>
+
+      <details class="how" id="how" data-hide="invalid" open>
+        <summary class="how-title">How this works</summary>
         <ol class="how-steps">
           <li>
             <span class="how-num" aria-hidden="true">1</span>
@@ -175,7 +181,7 @@
           </li>
         </ol>
         <p class="privacy faint">The nodes serving the file can see your IP address, like any peer-to-peer download.</p>
-      </section>
+      </details>
     </main>
 
     <footer class="footer">

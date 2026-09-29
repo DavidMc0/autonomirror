@@ -538,3 +538,109 @@
   border-top: 1px solid var(--border);
   font-size: 13px;
 }
+
+.how > summary {
+  cursor: pointer;
+  list-style: none;
+  width: max-content;
+}
+.how > summary::-webkit-details-marker {
+  display: none;
+}
+.how > summary::after {
+  content: "+";
+  margin-left: 8px;
+}
+.how[open] > summary::after {
+  content: "–";
+}
+.how:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+.fineprint {
+  display: none;
+  margin: 14px 0 0;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.fineprint a {
+  color: var(--text-muted);
+}
+.fineprint .sep {
+  margin: 0 8px;
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------ page views (?v=) */
+
+/* Medium: slim header strip, "How this works" collapsed. */
+[data-view="medium"] .file-hero {
+  height: 88px;
+}
+[data-view="medium"] .file-badge {
+  width: 40px;
+  height: 50px;
+}
+[data-view="medium"] .file-ext {
+  bottom: 8px;
+  font-size: 9px;
+  padding: 1px 4px;
+}
+[data-view="medium"] .file-ext.is-long {
+  font-size: 8px;
+}
+[data-view="medium"] .file-body {
+  padding-top: 18px;
+}
+[data-view="medium"] .eyebrow {
+  display: none;
+}
+
+/* Compact: just the file, the button and one line of small print. */
+[data-view="compact"] main {
+  max-width: 440px;
+  padding-top: 16px;
+}
+[data-view="compact"] :is(.file-hero, .file-body > .eyebrow, .address-row, .direct-line, .footer) {
+  display: none;
+}
+[data-view="compact"]:not(.show-how) .how {
+  display: none;
+}
+[data-view="compact"] .fineprint {
+  display: block;
+}
+[data-view="compact"] .file-name {
+  font-size: 20px;
+}
+[data-view="compact"] .file-meta {
+  margin-top: 6px;
+  font-size: 13.5px;
+}
+[data-view="compact"] .panel {
+  margin-top: 16px;
+  padding-top: 16px;
+  gap: 12px;
+}
+[data-view="compact"] .status-line {
+  min-height: 0;
+}
+[data-view="compact"] .status-indicator {
+  width: 28px;
+  height: 28px;
+}
+[data-view="compact"] .done-check {
+  width: 38px;
+  height: 38px;
+}
+[data-view="compact"] .done-facts > div:nth-child(2) {
+  display: none;
+}
+@media (min-height: 700px) and (min-width: 600px) {
+  [data-view="compact"] main {
+    padding-top: 8vh;
+  }
+}

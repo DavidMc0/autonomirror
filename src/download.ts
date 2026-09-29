@@ -70,7 +70,16 @@ if (!parsed.ok) {
 }
 
 function renderFileCard(): void {
-  const { address, name } = params;
+  const { address, name, view } = params;
+  document.documentElement.dataset.view = view;
+  const how = $<HTMLDetailsElement>("how");
+  how.open = view === "full";
+  $("show-how").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.documentElement.classList.add("show-how");
+    how.open = true;
+    how.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   document.title = `${name} · Autonomi Download`;
   setText($("file-name"), name);
   const ext = /\.([a-z0-9]{1,5})$/i.exec(name)?.[1];
