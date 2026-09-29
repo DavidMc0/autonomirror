@@ -80,3 +80,7 @@ Make sure `.wasm` files are served as `application/wasm`. All of the hosts above
 ## Credits
 
 Downloads are free and come from the Autonomi network. Powered by [Autonomi](https://autonomi.com/?ref=download-button-demo). Sample files are from [try.autonomi.com](https://try.autonomi.com).
+
+## Licence
+
+Licensed under either of [Apache License 2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT) at your option, matching the Autonomi browser SDK.
