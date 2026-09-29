@@ -2,10 +2,187 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Autonomi Download</title>
+    <meta name="description" content="Download a file directly from the Autonomi network, in your browser." />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23e91337'/%3E%3Cpath d='M16 8v12m-5-5 5 5 5-5M10 24h12' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   </head>
   <body>
-    <p>Download page, coming in Phase 2.</p>
+    <header class="topbar">
+      <a class="brand" href="../" aria-label="Autonomi Download Button, make your own">
+        <span class="brand-mark" aria-hidden="true">⬇</span>
+        <span>Download Button <span class="brand-sub">· Autonomi demo</span></span>
+      </a>
+      <a class="topbar-link" href="../">Make your own button</a>
+    </header>
+
+    <main id="app" data-state="connecting">
+      <!-- Shown only when the link itself is broken. -->
+      <section class="card card-pad invalid-card" data-show="invalid" hidden>
+        <p class="eyebrow">Broken link</p>
+        <h1 class="invalid-title">This download link isn't valid</h1>
+        <p class="muted" id="invalid-reason">The link is missing an Autonomi address.</p>
+        <a class="btn btn-primary" href="../">Make a working button</a>
+      </section>
+
+      <section class="card file-card" data-hide="invalid" aria-labelledby="file-name">
+        <div class="file-hero" aria-hidden="true">
+          <svg class="constellation" id="constellation" viewBox="0 0 600 170" preserveAspectRatio="xMidYMid slice"></svg>
+          <div class="file-badge">
+            <svg viewBox="0 0 48 60" class="file-badge-shape"><path d="M6 1h26l15 15v37a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6V7a6 6 0 0 1 6-6Z" /><path class="fold" d="M32 1v9a6 6 0 0 0 6 6h9" /></svg>
+            <span class="file-ext" id="file-ext">FILE</span>
+          </div>
+        </div>
+
+        <div class="card-pad file-body">
+          <p class="eyebrow">Shared on Autonomi</p>
+          <h1 class="file-name" id="file-name">Loading…</h1>
+          <p class="file-meta">
+            <span id="file-size" class="file-size">Size unknown</span>
+            <span id="size-badge" class="size-badge" hidden></span>
+            <span id="chunk-meta" class="chunk-meta" hidden></span>
+          </p>
+
+          <div class="address-row">
+            <span class="address-label">Address</span>
+            <code class="address-value" id="address-short" title=""></code>
+            <button class="btn btn-sm btn-ghost" type="button" id="copy-address" data-copy-label="Copy">Copy</button>
+          </div>
+
+          <p class="direct-line">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="2.2" fill="currentColor"/><circle cx="16" cy="4.5" r="2.2" fill="currentColor"/><circle cx="16" cy="15.5" r="2.2" fill="currentColor"/><path d="M6 9 14 5.3M6 11l8 3.7" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span>This file will be fetched directly from Autonomi nodes by your browser.</span>
+          </p>
+
+          <!-- ------------------------------------------------ connecting / ready -->
+          <div class="panel" data-show="connecting ready">
+            <div class="status-line" id="status-line" role="status" aria-live="polite">
+              <span class="status-indicator" id="status-indicator"><span class="spinner"></span></span>
+              <span class="status-text">
+                <span id="status-title">Connecting to the Autonomi network…</span>
+                <span class="status-detail" id="status-detail">The first connection can take a few seconds.</span>
+              </span>
+            </div>
+
+            <div class="notice notice-warn" id="memory-warning" hidden>
+              <span class="notice-icon" aria-hidden="true">!</span>
+              <div>
+                <p><strong>This is a large file for a phone.</strong></p>
+                <p>Your browser holds the whole file in memory while it downloads, which may fail on devices with limited memory. A computer is more reliable.</p>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block download-btn" type="button" id="download-btn" disabled>
+              <span class="spinner" id="download-spinner"></span>
+              <span id="download-label">Connecting…</span>
+              <span class="btn-meta" id="download-meta"></span>
+            </button>
+            <p class="cancelled-note faint" id="cancelled-note" hidden>Download cancelled.</p>
+          </div>
+
+          <!-- ------------------------------------------------ downloading -->
+          <div class="panel" data-show="downloading" hidden>
+            <div class="progress-head">
+              <span class="progress-title" id="progress-title">Fetching chunks…</span>
+              <span class="progress-percent mono" id="progress-percent"></span>
+            </div>
+            <div class="chunk-grid" id="chunk-grid" aria-hidden="true"></div>
+            <div
+              class="bar"
+              id="progress-bar"
+              role="progressbar"
+              aria-label="Download progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <span class="bar-fill" id="bar-fill"></span>
+            </div>
+            <div class="progress-foot">
+              <span class="progress-message" id="progress-message" aria-live="polite">Starting…</span>
+              <button class="btn btn-sm" type="button" id="cancel-btn">Cancel</button>
+            </div>
+          </div>
+
+          <!-- ------------------------------------------------ done -->
+          <div class="panel" data-show="done" hidden>
+            <div class="done-hero" role="status">
+              <span class="done-check" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7.5" /></svg>
+              </span>
+              <div>
+                <p class="done-title">Saved and verified</p>
+                <p class="done-text">Every chunk was checked against its Autonomi address.</p>
+              </div>
+            </div>
+            <dl class="done-facts">
+              <div><dt>Saved</dt><dd id="done-saved"></dd></div>
+              <div><dt>Size</dt><dd id="done-size"></dd></div>
+              <div class="hash-row">
+                <dt>BLAKE3</dt>
+                <dd>
+                  <code class="hash" id="done-hash"></code>
+                  <button class="btn btn-sm" type="button" id="copy-hash" data-copy-label="Copy hash">Copy hash</button>
+                </dd>
+              </div>
+            </dl>
+            <button class="btn btn-block" type="button" id="again-btn">Download again</button>
+          </div>
+
+          <!-- ------------------------------------------------ blocked -->
+          <div class="panel" data-show="blocked" hidden>
+            <div class="notice notice-warn" role="alert">
+              <span class="notice-icon" aria-hidden="true">!</span>
+              <div>
+                <p><strong id="blocked-title">This file can't be downloaded here</strong></p>
+                <p id="blocked-text"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ------------------------------------------------ error -->
+          <div class="panel" data-show="error" hidden>
+            <div class="notice notice-bad" role="alert">
+              <span class="notice-icon" aria-hidden="true">!</span>
+              <div>
+                <p><strong id="error-title">Something went wrong</strong></p>
+                <p id="error-text"></p>
+                <p id="error-network" hidden>Some networks block the connections this uses. Try another network or use the publisher's other mirrors.</p>
+                <span class="code-tag" id="error-code"></span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" type="button" id="retry-btn">Try again</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="how" aria-labelledby="how-title" data-hide="invalid">
+        <h2 id="how-title" class="how-title">How this works</h2>
+        <ol class="how-steps">
+          <li>
+            <span class="how-num" aria-hidden="true">1</span>
+            <div><strong>Split and encrypted.</strong> Files on Autonomi are split into encrypted chunks spread across many nodes.</div>
+          </li>
+          <li>
+            <span class="how-num" aria-hidden="true">2</span>
+            <div><strong>Fetched directly.</strong> Your browser finds the nodes holding this file and fetches the chunks from them. No server sends you the file.</div>
+          </li>
+          <li>
+            <span class="how-num" aria-hidden="true">3</span>
+            <div><strong>Verified and reassembled.</strong> Each chunk is checked, the file is put back together, and downloading is free.</div>
+          </li>
+        </ol>
+        <p class="privacy faint">The nodes serving the file can see your IP address, like any peer-to-peer download.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <a href="../">Make your own button</a><span class="sep">·</span>Downloads are free and come from the Autonomi network<span class="sep">·</span>Powered by
+      <a href="https://autonomi.com/?ref=download-button-demo" target="_blank" rel="noopener">Autonomi</a>
+    </footer>
+
+    <script type="module" src="/src/download.ts"></script>
   </body>
 </html>
