@@ -4,53 +4,61 @@ import { buildDownloadUrl } from "../src/lib/params";
 
 const A = "711c7e20006ff3e0ac6c1f3063286a0c1a3e4c409642e8c526173fa60bb7078a";
 const URL_ = buildDownloadUrl("https://example.github.io/autonomirror/", { address: A, name: "lucky.jpg", size: 312_400_000 });
+const text = (html: string) =>
+  new DOMParser().parseFromString(html, "text/html").querySelector("a")!.textContent!.replace(/\s+/g, " ").trim();
 
 describe("htmlSnippet", () => {
   it.each(BUTTON_STYLES)("%s matches snapshot", (style) => {
-    expect(htmlSnippet(style, URL_, { size: 312_400_000 })).toMatchSnapshot();
+    expect(htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 312_400_000 })).toMatchSnapshot();
   });
 
   it("escapes & in the href and omits the size when unknown", () => {
-    const html = htmlSnippet("light", URL_);
+    const html = htmlSnippet("light", URL_, { fileName: "lucky.jpg" });
     expect(html).toContain(`?a=${A}&amp;n=lucky.jpg`);
     expect(html).not.toContain("·");
-    expect(htmlSnippet("minimal", URL_)).toContain(">Download from Autonomi</a>");
+    expect(htmlSnippet("minimal", URL_, { fileName: "lucky.jpg" })).toContain(">Download lucky.jpg from Autonomi</a>");
   });
 
-  it("uses inline styles only: no script, class or stylesheet", () => {
+  it("uses inline styles only: no script, class, id or stylesheet", () => {
     for (const style of BUTTON_STYLES) {
-      const html = htmlSnippet(style, URL_, { size: 1 });
-      expect(html).not.toMatch(/<script|<style|<link|class=/i);
+      const html = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1 });
+      expect(html).not.toMatch(/<script|<style|<link|class=|id=/i);
       expect(html).toContain('target="_blank" rel="noopener"');
       expect(html).toContain('title="Free to download. Served by the Autonomi network, not this site."');
     }
   });
 
   it("parses back to one link with the original URL", () => {
-    const doc = new DOMParser().parseFromString(htmlSnippet("dark", URL_, { size: 5 }), "text/html");
+    const doc = new DOMParser().parseFromString(htmlSnippet("dark", URL_, { fileName: "lucky.jpg", size: 5 }), "text/html");
     const links = doc.querySelectorAll("a");
     expect(links).toHaveLength(1);
     expect(links[0].getAttribute("href")).toBe(URL_);
   });
+
+  it.each(["light", "dark"] as const)("%s puts the name first and the credit with a hidden logo under it", (style) => {
+    const html = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 138_931 });
+    expect(text(html)).toBe("⬇ Download lucky.jpg · 139 KB Powered by Autonomi");
+    const svg = new DOMParser().parseFromString(html, "text/html").querySelector("svg")!;
+    expect(svg.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("credits Autonomi in the label of the minimal link", () => {
+    expect(text(htmlSnippet("minimal", URL_, { fileName: "lucky.jpg", size: 138_931 }))).toBe("Download lucky.jpg from Autonomi (139 KB)");
+  });
 });
 
 describe("markdownSnippet", () => {
-  it("includes the compact size", () => {
-    expect(markdownSnippet(URL_, { size: 312_400_000 })).toBe(`[⬇ Download from Autonomi (312 MB)](${URL_})`);
-    expect(markdownSnippet(URL_)).toBe(`[⬇ Download from Autonomi](${URL_})`);
+  it("includes the name, the credit and the compact size", () => {
+    expect(markdownSnippet(URL_, { fileName: "lucky.jpg", size: 312_400_000 })).toBe(`[⬇ Download lucky.jpg from Autonomi (312 MB)](${URL_})`);
+    expect(markdownSnippet(URL_, { fileName: "lucky.jpg" })).toBe(`[⬇ Download lucky.jpg from Autonomi](${URL_})`);
   });
 });
 
 describe("file name in the label", () => {
-  it.each(BUTTON_STYLES)("%s shows the name", (style) => {
-    expect(htmlSnippet(style, URL_, { size: 138_931, fileName: "lucky.jpg" })).toMatchSnapshot();
-  });
-
   it("escapes the name in HTML", () => {
     const html = htmlSnippet("light", URL_, { fileName: 'a<b>&"c".zip' });
-    expect(html).toContain("Download a&lt;b&gt;&amp;&quot;c&quot;.zip from Autonomi");
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    expect(doc.querySelector("a")!.textContent).toContain('Download a<b>&"c".zip from Autonomi');
+    expect(html).toContain("Download a&lt;b&gt;&amp;&quot;c&quot;.zip<");
+    expect(text(html)).toContain('Download a<b>&"c".zip');
   });
 
   it("escapes the name in Markdown", () => {
@@ -66,8 +74,9 @@ describe("file name in the label", () => {
     expect(Array.from(shortenName(name))).toHaveLength(40);
     expect(shortenName("short.zip")).toBe("short.zip");
     const html = htmlSnippet("dark", URL_, { fileName: name });
-    expect(html).toContain(">Download a-very-long-file-na…vourite-mod-v1.2.zip from Autonomi<");
+    expect(html).toContain("<span>Download a-very-long-file-na…vourite-mod-v1.2.zip</span>");
     expect(html).toContain(`title="${name}. Free to download.`);
+    expect(htmlSnippet("light", URL_, { fileName: "short.zip" })).toContain('title="Free to download.');
   });
 });
 

@@ -118,21 +118,24 @@ All snippets use **inline styles only** (no external CSS, no script), so they pa
           background:#ffffff;color:#0b1f33;border:1px solid #c9d6e2;font:600 15px/1.2 system-ui,sans-serif;
           text-decoration:none">
   <span aria-hidden="true">⬇</span>
-  <span>Download from Autonomi</span>
-  <span style="font-weight:400;opacity:.7">· 312 MB</span>
+  <span style="display:inline-flex;flex-direction:column;gap:4px">
+    <span>Download my-mod-v1.2.zip <span style="font-weight:400;opacity:.7">· 312 MB</span></span>
+    <span style="font-size:11px">[Autonomi logo] <span style="opacity:.6">Powered by Autonomi</span></span>
+  </span>
 </a>
 ```
 
+- The first line reads "Download <file name>", shortened in the middle past 40 characters. The second line is a small, dimmed "Powered by Autonomi" credit with the Autonomi logo as an inline SVG, so the file name stays the most prominent text.
 - **Dark** uses the same markup with a dark background and light text.
-- **Minimal** is a plain underlined link: `Download from Autonomi (312 MB)`.
+- **Minimal** is a plain underlined link with no room for a second line, so the credit goes in the label: `Download my-mod-v1.2.zip from Autonomi (312 MB)`.
 - Add `title="Free to download. Served by the Autonomi network, not this site."` to each variant.
 - Omit the size span if the size is unknown.
-- Pick the final colours from Autonomi's public branding. Use text, not their logo, unless brand guidelines allow it.
+- Pick the final colours from Autonomi's public branding. Check that their brand guidelines allow the logo in the credit line.
 
 **Markdown:**
 
 ```markdown
-[⬇ Download from Autonomi (312 MB)](https://<demo-host>/d/?a=<addr>&n=<name>&s=<size>)
+[⬇ Download my-mod-v1.2.zip from Autonomi (312 MB)](https://<demo-host>/d/?a=<addr>&n=<name>&s=<size>)
 ```
 
 **Wording rules:** "free" only ever describes the download ("Free to download"). Don't say "free mirror", "forever", or "can't be taken down".

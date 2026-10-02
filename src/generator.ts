@@ -4,7 +4,7 @@ import { extractAddress, hexCount } from "./lib/address";
 import { describeError, getClient, MAX_DOWNLOAD_BYTES } from "./lib/client";
 import { formatBytes, formatExactBytes } from "./lib/format";
 import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBaseUrl, type PageView } from "./lib/params";
-import { buttonLabel, htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
+import { htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
 import { $, bindCopy } from "./lib/ui";
 import { initThemeToggle } from "./lib/theme";
 
@@ -16,6 +16,7 @@ const SAMPLES: Record<string, { address: string; name: string }> = {
   welcome: { address: "52af8a181c6171f8e12896ca734cdf60839c3b324dfbeadf857226dfc7cb453b", name: "Welcome.md" },
   large: { address: "f6eeba94008f493a8518186b0647df6d39dbde75f41d5b79549e9a4e63a1ab43", name: "64 MB of random bytes.bin" },
 };
+const PLACEHOLDER_NAME = "my-mod-v1.2.zip";
 
 type Check =
   | { status: "idle" }
@@ -66,7 +67,7 @@ function tidyAddress(): void {
     onAddressInput();
   }
 }
-document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"], #show-name').forEach((el) =>
+document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"]').forEach((el) =>
   el.addEventListener("change", render),
 );
 
@@ -198,10 +199,9 @@ function currentSize(): number | undefined {
   return check.status === "ok" ? check.size : undefined;
 }
 
-/** Size, plus the file name when "Show the file name on the button" is on. */
+/** The preview falls back to a placeholder name until one is typed. */
 function snippetOptions(): SnippetOptions {
-  const showName = $<HTMLInputElement>("show-name").checked;
-  return { size: currentSize(), fileName: showName ? fileName() || undefined : undefined };
+  return { fileName: fileName() || PLACEHOLDER_NAME, size: currentSize() };
 }
 
 function downloadUrl(): string | null {
@@ -223,7 +223,7 @@ function renderPreview(): void {
     h3{margin:0;font:600 16px/1.3 system-ui,sans-serif}
     p{margin:0;color:${muted}}
   </style></head><body>
-    <h3>${escapeText(fileName() || "my-mod-v1.2.zip")}</h3>
+    <h3>${escapeText(fileName() || PLACEHOLDER_NAME)}</h3>
     <p>Example text on your page. Your button goes wherever you paste the code.</p>
     <div>${snippet}</div>
   </body></html>`;
@@ -267,7 +267,6 @@ for (const id of ["out-html", "out-md", "out-link"]) {
 }
 
 function render(): void {
-  $("show-name-example").textContent = `“${buttonLabel(fileName() || "my-mod-v1.2.zip")}”`;
   renderCheck();
   renderPreview();
   renderEmbed();

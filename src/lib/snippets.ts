@@ -3,25 +3,31 @@ import { formatBytes } from "./format";
 export type ButtonStyle = "light" | "dark" | "minimal";
 export const BUTTON_STYLES: readonly ButtonStyle[] = ["light", "dark", "minimal"];
 
-export const BUTTON_LABEL = "Download from Autonomi";
 export const BUTTON_TITLE = "Free to download. Served by the Autonomi network, not this site.";
+export const POWERED_BY = "Powered by Autonomi";
 /** Longer names are shortened in the middle so the version and extension stay visible. */
 export const MAX_LABEL_NAME = 40;
 
 export interface SnippetOptions {
+  fileName: string;
   size?: number;
-  /** When set, the label reads "Download <name> from Autonomi". */
-  fileName?: string;
 }
 
 // Colours from Autonomi's public palette: navy #131c32, indigo #232a59, red #e91337, mint #97ffa0.
 const BASE =
-  "display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;" +
+  "display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;" +
   "font:600 15px/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none;white-space:nowrap";
 const THEMES = {
   light: { box: "background:#ffffff;color:#131c32;border:1px solid #c5cdd7", arrow: "#e91337" },
   dark: { box: "background:#131c32;color:#ffffff;border:1px solid #232a59", arrow: "#97ffa0" },
 } as const;
+
+// The Autonomi mark, traced from the official logo. No ids or masks, so several buttons can share a page.
+const LOGO =
+  `<svg aria-hidden="true" focusable="false" width="11" height="11" viewBox="0 0 150 150" fill="#e91337" style="flex:none;display:block">` +
+  `<path d="M4 74A73 73 0 0 1 148.5 72L136 66A72 72 0 0 0 72 20C60 19 50 22 50 32V42C49 58 30 72 4 74Z"/>` +
+  `<path fill-rule="evenodd" d="M49 76C72 56 118 44 149 74A73 73 0 0 1 34 136C26 120 30 96 49 76ZM114 95C90 100 72 114 76 129C104 131 127 120 127 100C126 96 120 94 114 95Z"/>` +
+  `</svg>`;
 
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 
@@ -43,37 +49,46 @@ export function shortenName(name: string, max = MAX_LABEL_NAME): string {
   return `${chars.slice(0, head).join("")}…${chars.slice(-tail).join("")}`;
 }
 
-export function buttonLabel(fileName?: string): string {
-  return fileName ? `Download ${shortenName(fileName)} from Autonomi` : BUTTON_LABEL;
+/** The Light and Dark buttons credit Autonomi on a line of their own under this label. */
+export function buttonLabel(fileName: string): string {
+  return `Download ${shortenName(fileName)}`;
+}
+
+/** The minimal link and Markdown have no second line, so the credit goes in the label. */
+export function linkLabel(fileName: string): string {
+  return `${buttonLabel(fileName)} from Autonomi`;
 }
 
 const sizeLabel = (size?: number) => (size === undefined ? "" : formatBytes(size, { compact: true }));
 
-export function htmlSnippet(style: ButtonStyle, url: string, { size, fileName }: SnippetOptions = {}): string {
+export function htmlSnippet(style: ButtonStyle, url: string, { fileName, size }: SnippetOptions): string {
   const href = escapeHtml(url);
   const sizeText = sizeLabel(size);
-  const label = escapeHtml(buttonLabel(fileName));
   // A shortened name is still readable in full on hover.
-  const title = fileName && shortenName(fileName) !== fileName ? `${fileName}. ${BUTTON_TITLE}` : BUTTON_TITLE;
+  const title = shortenName(fileName) !== fileName ? `${fileName}. ${BUTTON_TITLE}` : BUTTON_TITLE;
   const attrs = `href="${href}" target="_blank" rel="noopener" title="${escapeHtml(title)}"`;
 
   if (style === "minimal") {
-    return `<a ${attrs} style="text-decoration:underline">${label}${sizeText ? ` (${sizeText})` : ""}</a>`;
+    return `<a ${attrs} style="text-decoration:underline">${escapeHtml(linkLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}</a>`;
   }
 
   const theme = THEMES[style];
-  const lines = [
+  // The leading space is invisible in the flex row but keeps the text readable if styles are stripped.
+  const sizeSpan = sizeText ? ` <span style="font-weight:400;opacity:.7">· ${sizeText}</span>` : "";
+  // The label and size keep the first line; the credit sits under them, smaller and dimmer.
+  return [
     `<a ${attrs}`,
     `   style="${BASE};${theme.box}">`,
     `  <span aria-hidden="true" style="color:${theme.arrow}">⬇</span>`,
-    `  <span>${label}</span>`,
-  ];
-  if (sizeText) lines.push(`  <span style="font-weight:400;opacity:.7">· ${sizeText}</span>`);
-  lines.push(`</a>`);
-  return lines.join("\n");
+    `  <span style="display:inline-flex;flex-direction:column;gap:4px">`,
+    `    <span style="display:inline-flex;gap:8px"><span>${escapeHtml(buttonLabel(fileName))}</span>${sizeSpan}</span>`,
+    `    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;line-height:1;letter-spacing:.02em">${LOGO}<span style="opacity:.6">${POWERED_BY}</span></span>`,
+    `  </span>`,
+    `</a>`,
+  ].join("\n");
 }
 
-export function markdownSnippet(url: string, { size, fileName }: SnippetOptions = {}): string {
+export function markdownSnippet(url: string, { fileName, size }: SnippetOptions): string {
   const sizeText = sizeLabel(size);
-  return `[⬇ ${escapeMarkdown(buttonLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}](${url})`;
+  return `[⬇ ${escapeMarkdown(linkLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}](${url})`;
 }
