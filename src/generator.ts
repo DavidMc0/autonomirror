@@ -1,7 +1,7 @@
 import "./styles.css";
 import "./generator.css";
 import { extractAddress, hexCount } from "./lib/address";
-import { describeError, getClient, MAX_DOWNLOAD_BYTES } from "./lib/client";
+import { describeError, getClient, MAX_DOWNLOAD_BYTES, oversizedFileBytes } from "./lib/client";
 import { formatBytes, formatExactBytes } from "./lib/format";
 import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBaseUrl, type PageView } from "./lib/params";
 import { htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
@@ -126,8 +126,13 @@ async function runCheck(): Promise<void> {
     check = size > MAX_DOWNLOAD_BYTES ? { status: "too-large", address: addr, size } : { status: "ok", address: addr, size };
   } catch (err) {
     if (seq !== checkSeq) return;
-    const info = describeError(err);
-    check = { status: "failed", address: addr, code: info.code, message: info.message, forced: false };
+    const oversized = oversizedFileBytes(err);
+    if (oversized !== undefined) {
+      check = { status: "too-large", address: addr, size: oversized };
+    } else {
+      const info = describeError(err);
+      check = { status: "failed", address: addr, code: info.code, message: info.message, forced: false };
+    }
   }
   render();
 }

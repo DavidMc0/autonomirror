@@ -2,7 +2,7 @@ import "./styles.css";
 import "./download.css";
 import { getBrowserCapabilities, type AutonomiClient, type ProgressEvent } from "@withautonomi/ant-browser-sdk";
 import { shortenAddress } from "./lib/address";
-import { closeClient, connectedClient, describeError, getClient, MAX_DOWNLOAD_BYTES, type FriendlyError } from "./lib/client";
+import { closeClient, connectedClient, describeError, getClient, MAX_DOWNLOAD_BYTES, oversizedFileBytes, type FriendlyError } from "./lib/client";
 import { drawConstellation, type Constellation } from "./lib/constellation";
 import { formatBytes, formatExactBytes } from "./lib/format";
 import { parseDownloadParams, type DownloadParams } from "./lib/params";
@@ -155,8 +155,15 @@ async function verify(client: AutonomiClient): Promise<void> {
       },
     });
   } catch (err) {
+    const oversized = oversizedFileBytes(err);
+    if (oversized !== undefined) {
+      verifiedSize = oversized;
+      renderSize();
+    }
     // A download already started takes precedence over a failed pre-check.
-    if (state === "ready") showError(describeError(err), "verify");
+    if (state !== "ready") return;
+    if (oversized !== undefined) showTooLarge(oversized);
+    else showError(describeError(err), "verify");
     return;
   }
   verifiedSize = reader.size;
@@ -165,10 +172,7 @@ async function verify(client: AutonomiClient): Promise<void> {
   if (state !== "ready") return;
 
   if (verifiedSize > MAX_DOWNLOAD_BYTES) {
-    showBlocked(
-      "This file is too large for a browser download",
-      `It's ${formatBytes(verifiedSize)}. Browsers can download files up to ${formatBytes(MAX_DOWNLOAD_BYTES)} from Autonomi, so use the Autonomi command-line tools (ant) for this one.`,
-    );
+    showTooLarge(verifiedSize);
     return;
   }
   $("memory-warning").hidden = !(isPhone() && verifiedSize > PHONE_WARN_BYTES);
@@ -208,6 +212,13 @@ async function startDownload(): Promise<void> {
     renderSize();
     showDone(download.hash, save.method, save.name, download.bytes.byteLength, performance.now() - started);
   } catch (err) {
+    const oversized = oversizedFileBytes(err);
+    if (oversized !== undefined) {
+      verifiedSize = oversized;
+      renderSize();
+      showTooLarge(oversized);
+      return;
+    }
     const info = describeError(err);
     if (info.cancelled) {
       setState("ready");
@@ -319,6 +330,13 @@ function showBlocked(title: string, text: string): void {
   setText($("blocked-title"), title);
   setText($("blocked-text"), text);
   setState("blocked");
+}
+
+function showTooLarge(size: number): void {
+  showBlocked(
+    "This file is too large for a browser download",
+    `It's ${formatBytes(size)}. Browsers can download files up to ${formatBytes(MAX_DOWNLOAD_BYTES)} from Autonomi, so use the Autonomi command-line tools (ant) for this one.`,
+  );
 }
 
 function showError(info: FriendlyError, action: typeof retryAction): void {

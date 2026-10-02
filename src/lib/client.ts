@@ -35,6 +35,22 @@ export function closeClient(): void {
   pending = null;
 }
 
+/**
+ * The size of a file the SDK refused for being over the browser limit, or undefined.
+ * The core checks the size while opening the file, so it never returns a reader with
+ * a large `.size`; the size only arrives in the error text ("invalid public file size N").
+ */
+export function oversizedFileBytes(err: unknown): number | undefined {
+  for (let e = err; e instanceof Error; e = e.cause) {
+    const match = /invalid public file size (\d+)/.exec(e.message);
+    if (match) {
+      const size = Number(match[1]);
+      return size > MAX_DOWNLOAD_BYTES ? size : undefined;
+    }
+  }
+  return undefined;
+}
+
 export interface FriendlyError {
   code: string;
   message: string;
