@@ -12,6 +12,8 @@ This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https:/
    - an HTML button (Light, Dark or Minimal link) with inline styles only. Light and Dark read "Download lucky.jpg" with a small "Powered by Autonomi" line and logo underneath; the Minimal link reads "Download lucky.jpg from Autonomi";
    - a Markdown link for READMEs ("Download lucky.jpg from Autonomi");
    - a plain link.
+
+   Or switch to **Upload a file**: pick or drop a file, see the exact storage price, then pay from a browser wallet such as MetaMask. Storage is paid in ANT on Arbitrum One, plus a little ETH on Arbitrum for network fees. Once stored, the address and name fill in and the embed code is ready. Uploads are remembered in the browser so a paid upload isn't lost if the tab closes.
 2. **The button** is an ordinary link to the download page. It never loads the SDK on your site, so it works anywhere links do: websites, CMSs, READMEs and forums.
 3. **The download page (`/d/`)** connects to the network as soon as it opens. When the visitor clicks Download, it fetches every encrypted chunk directly from the nodes storing them, verifies each chunk and the whole file (BLAKE3), and saves the file. Chromium browsers show a save dialog; other browsers use a normal download.
 
@@ -72,6 +74,8 @@ Make sure `.wasm` files are served as `application/wasm`. All of the hosts above
 
 - **Experimental.** The SDK and protocol are early. The SDK version is pinned, and a network upgrade may require updating it.
 - **1 GB maximum.** The SDK refuses larger downloads, and the whole file is held in memory while it downloads. Phones get a warning above 300 MB.
+- **Uploads need a browser wallet** with ANT and a little ETH on Arbitrum One; there's no card payment yet. Wallet approvals are for the exact amount of each upload. Getting prices can take a minute or two, and a page reload during an upload loses the SDK's retry state (a finished upload is kept). On phones, use a wallet app's built-in browser.
+- **Uploads are public and permanent**, and the payment links an upload to the paying wallet on the Arbitrum blockchain.
 - **Public files only.** Archives (folder uploads) and private files aren't supported. The file name comes from the link, not the network.
 - **Speed** depends on the network and the visitor's connection. The first lookup of a file can take 20–30 seconds.
 - **Networks that block UDP** (some corporate or public Wi-Fi) can't make the WebRTC connections this relies on. The page says so when that happens.

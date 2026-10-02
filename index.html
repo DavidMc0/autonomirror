@@ -44,6 +44,12 @@
         <section class="card card-pad gen-step" aria-labelledby="step1">
           <h2 class="step-title" id="step1"><span class="step-num">1</span> Your file</h2>
 
+          <div class="seg source-tabs" role="radiogroup" aria-label="Where your file is">
+            <label><input type="radio" name="source" value="address" checked /><span>Paste an address</span></label>
+            <label><input type="radio" name="source" value="upload" /><span>Upload a file</span></label>
+          </div>
+
+          <div id="source-address">
           <form id="file-form" novalidate autocomplete="off">
             <div class="field">
               <div class="field-head">
@@ -84,6 +90,89 @@
           </form>
 
           <div class="check-result" id="check-result" aria-live="polite" hidden></div>
+          </div>
+
+          <!-- Upload: pick → busy (preparing) → quote → busy (paying, storing) → done, or error. -->
+          <div class="upload" id="source-upload" hidden>
+            <div data-show="pick">
+              <label class="dropzone" id="dropzone">
+                <input type="file" id="up-file" class="visually-hidden" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m-4.5 4.5L12 4l4.5 4.5M5 14v4.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V14" /></svg>
+                <span><strong>Drop a file here</strong> or <span class="dropzone-link">choose one</span></span>
+                <span class="faint">Up to 1 GB · stored publicly and permanently</span>
+              </label>
+              <p class="hint">Storage is paid in <strong>ANT on Arbitrum One</strong>, plus a little <strong>ETH on Arbitrum</strong> for network fees, from a browser wallet such as MetaMask. You'll see the exact price before paying.</p>
+              <div class="notice notice-info up-note" id="up-no-wallet" hidden>
+                <span class="notice-icon" aria-hidden="true">i</span>
+                <div><p>No browser wallet found. You can still see the price, but paying needs a wallet extension such as MetaMask. On a phone, open this page in your wallet app's built-in browser.</p></div>
+              </div>
+              <div class="up-history" id="up-history" hidden>
+                <p class="up-history-title">Your uploads <span class="faint">· saved in this browser</span></p>
+                <ul id="up-history-list"></ul>
+              </div>
+            </div>
+
+            <div class="up-file" data-show="busy quote error">
+              <span class="up-file-icon" aria-hidden="true">📄</span>
+              <span class="up-file-name" id="up-file-name"></span>
+              <span class="up-file-size faint" id="up-file-size"></span>
+            </div>
+
+            <div data-show="busy" aria-live="polite">
+              <p class="up-status"><span class="spinner" aria-hidden="true"></span><span id="up-status"></span></p>
+              <div class="up-bar" id="up-bar"><i id="up-bar-fill"></i></div>
+              <p class="hint" id="up-detail"></p>
+              <p class="hint up-keep-open" id="up-keep-open" hidden>Keep this tab open until the upload finishes.</p>
+              <button class="btn btn-sm" type="button" id="up-cancel">Cancel</button>
+            </div>
+
+            <div data-show="quote">
+              <div class="up-price">
+                <span class="up-price-label">Storage price</span>
+                <span class="up-price-value" id="up-price"></span>
+                <span class="faint">+ a small Arbitrum network fee, paid in ETH</span>
+              </div>
+              <p class="hint" id="up-prompts">Your wallet will ask you twice: first to approve this amount of ANT, then to pay.</p>
+              <div class="up-terms">
+                <p><strong>Uploads are public and permanent.</strong> Anyone with the address can download the file, and it can't be deleted or changed. Your payment is recorded on the Arbitrum blockchain, so the upload can be traced back to your wallet.</p>
+                <p>Don't upload anything you don't have the right to share publicly, such as copyrighted material, illegal content, or other people's personal information.</p>
+                <label class="up-agree"><input type="checkbox" id="up-agree" /> <span>I understand, and I have the right to share this file publicly.</span></label>
+              </div>
+              <div class="up-actions">
+                <button class="btn btn-primary" type="button" id="up-pay" disabled>Connect wallet &amp; pay</button>
+                <button class="btn" type="button" id="up-decline">Cancel</button>
+              </div>
+              <p class="up-problem" id="up-problem" role="alert" hidden></p>
+            </div>
+
+            <div data-show="done">
+              <div class="notice notice-ok">
+                <span class="notice-icon" aria-hidden="true">✓</span>
+                <div class="up-done">
+                  <p><strong>Stored on Autonomi</strong> · <span id="up-done-file"></span></p>
+                  <p class="up-done-row"><span class="faint">Address</span> <code class="mono" id="up-done-address"></code> <button class="btn btn-sm btn-ghost" type="button" id="up-copy-address" data-copy-label="Copy">Copy</button></p>
+                  <p class="up-done-row" id="up-done-paid"></p>
+                  <p>Your button and embed code are ready below.</p>
+                </div>
+              </div>
+              <button class="btn btn-sm up-again" type="button" id="up-again">Upload another file</button>
+            </div>
+
+            <div data-show="error">
+              <div class="notice notice-bad" role="alert">
+                <span class="notice-icon" aria-hidden="true">!</span>
+                <div>
+                  <p><strong id="up-error-title"></strong></p>
+                  <p id="up-error-text"></p>
+                  <span class="code-tag" id="up-error-code"></span>
+                </div>
+              </div>
+              <div class="up-actions">
+                <button class="btn btn-primary" type="button" id="up-retry">Try again</button>
+                <button class="btn" type="button" id="up-restart">Start over</button>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- ------------------------------------------------ 2. the button -->

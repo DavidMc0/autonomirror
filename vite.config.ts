@@ -13,6 +13,8 @@ export default defineConfig({
       },
     },
   },
+  // Local test pages (git-ignored): a locked file in there crashed the dev server's watcher.
+  server: { watch: { ignored: ["**/Test files/**"] } },
   // Keep the SDK out of dep pre-bundling so its `new URL(..., import.meta.url)` WASM path resolves in dev.
   optimizeDeps: { exclude: ["@withautonomi/ant-browser-sdk"] },
 });

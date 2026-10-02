@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBytes, formatExactBytes } from "../src/lib/format";
+import { formatAnt, formatBytes, formatExactBytes } from "../src/lib/format";
 
 describe("formatBytes", () => {
   it.each([
@@ -29,5 +29,25 @@ describe("formatBytes", () => {
 
   it("formats exact bytes", () => {
     expect(formatExactBytes(67_108_864)).toBe("67,108,864 bytes");
+  });
+});
+
+describe("formatAnt", () => {
+  it.each([
+    ["0", "0 ANT"],
+    ["1250000000000000000", "1.25 ANT"],
+    ["1000000000000000000", "1 ANT"],
+    ["12345600000000000000000", "12,345.6 ANT"],
+    ["4200000000000000", "0.0042 ANT"],
+    ["4210000000000000", "0.0043 ANT"],
+    ["1234567890000", "0.0000013 ANT"],
+    ["999999000000000000", "1 ANT"],
+    ["1", "0.000000000000000001 ANT"],
+  ])("%s atto → %s", (atto, text) => {
+    expect(formatAnt(atto)).toBe(text);
+  });
+
+  it("takes bigints", () => {
+    expect(formatAnt(5n * 10n ** 17n)).toBe("0.5 ANT");
   });
 });

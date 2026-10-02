@@ -7,6 +7,7 @@ import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBas
 import { htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
 import { $, bindCopy } from "./lib/ui";
 import { initThemeToggle } from "./lib/theme";
+import { initUpload } from "./upload";
 
 initThemeToggle();
 
@@ -255,7 +256,9 @@ function renderEmbed(): void {
   const embed = $("embed");
 
   let lockedText = "";
-  if (!address()) lockedText = "Paste an address and check it to get your embed code.";
+  if (!address()) {
+    lockedText = radio("source") === "upload" ? "Upload a file to get your embed code." : "Paste an address and check it to get your embed code.";
+  }
   else if (check.status === "too-large") lockedText = "This file is over the 1 GB browser limit, so there's no embed code for it.";
   else if (!ready) lockedText = "Check your address to get the embed code.";
   else if (!name) lockedText = "Add a file name to get the embed code.";
@@ -302,6 +305,29 @@ function escapeText(text: string): string {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// ------------------------------------------------------------------ source: paste an address, or upload
+
+document.querySelectorAll<HTMLInputElement>('input[name="source"]').forEach((el) => el.addEventListener("change", showSource));
+// The browser may restore the selected tab on reload.
+showSource();
+
+function showSource(): void {
+  const upload = radio<"address" | "upload">("source") === "upload";
+  $("source-address").hidden = upload;
+  $("source-upload").hidden = !upload;
+  renderEmbed();
+}
+
+// A file stored from this page is known to exist, so it skips the address check.
+initUpload((file) => {
+  addressInput.value = file.address;
+  nameInput.value = sanitizeName(file.name);
+  onAddressInput();
+  checkSeq++;
+  check = { status: "ok", address: file.address, size: file.size };
+  render();
+});
 
 // ------------------------------------------------------------------ boot: optional pre-fill from ?a=&n=&v=
 
