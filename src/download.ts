@@ -326,9 +326,10 @@ function setButton(mode: "connecting" | "ready"): void {
   setText($("download-label"), mode === "ready" ? "Download" : "Connecting…");
 }
 
-function showBlocked(title: string, text: string): void {
+function showBlocked(title: string, text: string, cliLink = false): void {
   setText($("blocked-title"), title);
   setText($("blocked-text"), text);
+  $("blocked-cli").hidden = !cliLink;
   setState("blocked");
 }
 
@@ -336,6 +337,7 @@ function showTooLarge(size: number): void {
   showBlocked(
     "This file is too large for a browser download",
     `It's ${formatBytes(size)}. Browsers can download files up to ${formatBytes(MAX_DOWNLOAD_BYTES)} from Autonomi, so use the Autonomi command-line tools (ant) for this one.`,
+    true,
   );
 }
 

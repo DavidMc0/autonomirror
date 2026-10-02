@@ -17,6 +17,7 @@ const SAMPLES: Record<string, { address: string; name: string }> = {
   large: { address: "f6eeba94008f493a8518186b0647df6d39dbde75f41d5b79549e9a4e63a1ab43", name: "64 MB of random bytes.bin" },
 };
 const PLACEHOLDER_NAME = "my-mod-v1.2.zip";
+const CLI_URL = "https://github.com/WithAutonomi/ant-client#installation";
 
 type Check =
   | { status: "idle" }
@@ -166,16 +167,26 @@ function renderCheck(): void {
       result.replaceChildren(icon("✓"), el("span", "", "Found · ", size, " · verified DataMap"));
       break;
     }
-    case "too-large":
+    case "too-large": {
+      const cli = el("a", "", "Autonomi command-line tool (ant) ↗") as HTMLAnchorElement;
+      cli.href = CLI_URL;
+      cli.target = "_blank";
+      cli.rel = "noopener";
       result.replaceChildren(
         icon("!"),
         el(
-          "span",
-          "",
-          `This file is ${formatBytes(check.size)}. The browser download limit is ${formatBytes(MAX_DOWNLOAD_BYTES)}, so it can't be used in this demo.`,
+          "div",
+          "check-body",
+          el(
+            "p",
+            "",
+            `This file is ${formatBytes(check.size)}. The browser download limit is ${formatBytes(MAX_DOWNLOAD_BYTES)}, so it can't be used in this demo.`,
+          ),
+          el("p", "muted", "People can still download it with the ", cli, "."),
         ),
       );
       break;
+    }
     case "failed": {
       const body = el("div", "check-body");
       body.append(
