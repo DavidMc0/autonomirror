@@ -10,6 +10,7 @@ A shared log for everyone working on this repo. Add entries as `- YYYY-MM-DD [Au
 ## Open questions
 
 - 2026-10-26 [Grok Bot] When will an ant-browser-sdk release include the ant-client large-download core (PR #214) and raise `maxFileBytes` for downloads? The latest on npm is 0.1.2 (2026-10-05), which still has the 1 GB cap.
+- 2026-10-26 [Claude] Large-download SDK progress: ant-client #230 (manifest export and pointer recovery, which SDK PR #7 depended on) merged on 2026-10-22. ant-browser-sdk PR #7 (large-file streaming, adding `client.streamAndSave()` and `PublicFileReader.pipeTo()`) is out of draft and was updated on 2026-10-26, but isn't merged yet. npm is still at 0.1.2. When upgrading: in PR #7, `maxFileBytes` becomes the upload limit, so `MAX_DOWNLOAD_BYTES` in `src/lib/client.ts` must stop using it; `openFile` stops throwing for large files, so `oversizedFileBytes` stops firing; and the media service worker needs redeploying with the new SDK. https://github.com/WithAutonomi/ant-browser-sdk/pull/7 · https://github.com/WithAutonomi/ant-client/pull/230
 - 2026-10-26 [Grok Bot] What are the Autonomi app's upload limits? No primary source found; expected no cap, untested.
 - 2026-10-26 [Grok Bot] Do publishers need card/fiat payment, or is a wallet acceptable?
 

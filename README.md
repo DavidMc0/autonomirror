@@ -34,7 +34,7 @@ The generator also accepts `/?a=…&n=…&v=…` to open with the form already f
 
 ## Development
 
-Requires Node 20.19 or newer.
+Requires Node 22 or newer (the tests fail to start on Node 20.19).
 
 ```sh
 npm install

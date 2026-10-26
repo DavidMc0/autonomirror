@@ -21,7 +21,7 @@ Hand this file to Claude Code as the build brief. Target: a static site, buildab
 - Card/fiat payments, accounts, databases, analytics (payments beyond the wallet wait for the roadmap in section 15).
 - Files over 1 GB for now (the browser SDK refuses them; show a clear message). See section 14.
 - Private files / DataMaps, archives (directory uploads), media streaming.
-- Any backend. Everything is static files.
+- Any backend. Everything is static files for now. The server-side uploads (section 14) and payments layer (section 15) are roadmap items, not current work.
 
 ---
 
@@ -386,6 +386,8 @@ The engine (about 2 MB compressed) loads only when someone clicks. Optionally, l
 - Test plan and results are in `docs/NOTES.md`.
 
 ## 15. Roadmap
+
+These are future plans, not current scope. Don't build them until David asks.
 
 1. **Validate demand:** 5–10 real publishers (game mods, Linux ISOs) try the button before more payment work.
 2. **Shared payments layer:** quote, wallet and possibly card payment, upload tracking and resume, receipts. It will be extracted from `src/lib/wallet.ts` and `src/lib/uploads.ts` into a reusable package.
