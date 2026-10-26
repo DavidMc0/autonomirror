@@ -5,7 +5,7 @@
 - Never rewrite another author's entries. Only append, or mark them resolved.
 - Changes go through PR branches, never directly to `main`.
 
-## Commands (from package.json, Node 20.19+)
+## Commands (from package.json, Node 22+)
 
 ```sh
 npm ci
