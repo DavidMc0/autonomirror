@@ -1,0 +1,35 @@
+# Project notes
+
+A shared log for everyone working on this repo. Add entries as `- YYYY-MM-DD [Author] text`, with Author being `[Grok Bot]`, `[Claude]` or `[David]`. Append only: never rewrite someone else's entry. To close one, add `(resolved YYYY-MM-DD [Author]: …)` after it. `SPEC.md` stays the source of truth; record decisions here and then fold them into the spec.
+
+## Decisions
+
+- 2026-10-26 [Grok Bot] Validate demand with 5–10 real publishers (game mods, Linux ISOs) before building payments further.
+- 2026-10-26 [Grok Bot] After validation, build a **shared payments layer** (price quote, wallet and possibly card payment, upload tracking and resume, receipts). It will be extracted from `src/lib/wallet.ts` and `src/lib/uploads.ts` so that later front ends (photo albums, AutoVid YouTube backup) can reuse it.
+
+## Open questions
+
+- 2026-10-26 [Grok Bot] When will an ant-browser-sdk release include the ant-client large-download core (PR #214) and raise `maxFileBytes` for downloads? The latest on npm is 0.1.2 (2026-10-05), which still has the 1 GB cap.
+- 2026-10-26 [Grok Bot] What are the Autonomi app's upload limits? No primary source found; expected no cap, untested.
+- 2026-10-26 [Grok Bot] Do publishers need card/fiat payment, or is a wallet acceptable?
+
+## Test results
+
+- 2026-10-26 [Grok Bot] `npm test` with Node 20.19.2 fails to start: vitest workers throw `webidl.util.markAsUncloneable is not a function`, likely needing a newer Node. With Node 22: 8 files, 103 tests passed.
+- 2026-10-26 [Grok Bot] Size-limit findings (from code and docs, not tested):
+  - The network and core no longer limit downloads to 1 GB. ant-client PR #214 adds streaming `pipeTo` and range reads; it shipped in ant-core v0.13.0 and ant-cli v0.3.11/0.3.12. https://github.com/WithAutonomi/ant-client/pull/214 · https://github.com/WithAutonomi/ant-client/blob/main/ant-core/src/browser.rs
+  - `MAX_BROWSER_FILE_BYTES` (1,000,000,000) still caps **browser uploads**.
+  - The browser SDK (0.1.2 and main) still caps downloads, range reads and media at 1 GB. https://github.com/WithAutonomi/ant-browser-sdk/blob/main/src/limits.ts · https://docs.autonomi.com/developers/sdk/install/build-in-browser
+  - Nodes: ant-node v0.23.0 (2026-10-16) and v0.23.1 (2026-10-23). The release notes don't mention size limits. https://github.com/WithAutonomi/ant-node/releases
+  - This repo pins SDK 0.1.1 and uses the in-memory `downloadAndSave`, so >1 GB downloads won't work here yet.
+
+## Next steps
+
+- 2026-10-26 [Grok Bot] Contact publishers from the shortlist once David approves the drafts.
+- 2026-10-26 [Grok Bot] Test plan for downloads over 1 GB:
+  1. Upload 1.5 GB and 4 GB public files with ant CLI 0.3.12 and record the cost.
+  2. Use a newer SDK, or build one locally from main against ant-client main with the download cap raised.
+  3. On a branch, stream `/d/` via `openFile().pipeTo(showSaveFilePicker writable)` for files over 1 GB.
+  4. Test Chromium desktop: download completes, hash matches, memory stays bounded.
+  5. Record the Firefox and Safari fallback, Android Chrome with 1.5 GB, aborting mid-download, and a UDP-blocked network.
+  6. Pass: 4 GB on Chromium desktop with bounded memory.
