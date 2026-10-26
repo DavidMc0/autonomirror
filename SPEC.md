@@ -14,11 +14,12 @@ Hand this file to Claude Code as the build brief. Target: a static site, buildab
 - A **download page**: opened by the button; downloads, verifies and saves the file in the browser.
 - Embed outputs: an HTML button snippet, a Markdown link for READMEs, and a plain URL.
 - A visible "Powered by Autonomi" credit linking to autonomi.com.
+- **Uploading from a browser wallet** (shipped): pick a file, see the price, pay in ANT plus ETH gas on Arbitrum One, and the address fills in. Max 1 GB (see section 14).
 
 **Out of scope (do not build)**
 
-- Uploading, payments, wallets, accounts, databases, analytics.
-- Files over 1 GB (the browser SDK refuses them; show a clear message).
+- Card/fiat payments, accounts, databases, analytics (payments beyond the wallet wait for the roadmap in section 15).
+- Files over 1 GB for now (the browser SDK refuses them; show a clear message). See section 14.
 - Private files / DataMaps, archives (directory uploads), media streaming.
 - Any backend. Everything is static files.
 
@@ -281,7 +282,7 @@ If the demo is deployed under a sub-path (for example GitHub Pages at `/<repo>/`
 ## 11. Known limits to state in the README
 
 - Experimental SDK and protocol: pin the version; a network upgrade may require updating it.
-- 1 GB maximum; the whole file is held in memory while downloading.
+- 1 GB maximum for now; the whole file is held in memory while downloading (see section 14).
 - Public files only; the file name comes from the link, not the network.
 - Download speed depends on the network and the visitor's connection.
 
@@ -368,3 +369,33 @@ The engine (about 2 MB compressed) loads only when someone clicks. Optionally, l
 - [ ] With the self-hosted file, a download completes with the demo host blocked entirely.
 
 **Rough effort:** about half a day on top of the existing `src/lib/*` helpers, plus npm publishing if the CDN option is wanted.
+
+---
+
+## 14. Size limits (checked 2026-10-26, untested)
+
+- **Downloads:** the network and core no longer cap them. [ant-client PR #214](https://github.com/WithAutonomi/ant-client/pull/214) adds streaming `pipeTo` and range reads, shipped in ant-core v0.13.0. But `@withautonomi/ant-browser-sdk` 0.1.2 (latest on npm) and its main branch still cap downloads at 1,000,000,000 bytes ([limits.ts](https://github.com/WithAutonomi/ant-browser-sdk/blob/main/src/limits.ts)). This repo pins 0.1.1 and uses the in-memory `downloadAndSave`. Going over 1 GB needs a new SDK release, a bump to the pin, and streaming via `openFile().pipeTo()` on Chromium.
+- **Uploads, three paths:**
+
+| Path | Cap |
+| --- | --- |
+| Browser wallet upload in the generator | **1 GB**: `MAX_BROWSER_FILE_BYTES` in [ant-core](https://github.com/WithAutonomi/ant-client/blob/main/ant-core/src/browser.rs) |
+| Autonomi app or `ant file upload --public`, then paste the address | Expected none (untested) |
+| Server-side upload once the payments layer exists | Expected none; paid in batches above about 1 GiB (untested) |
+
+- Test plan and results are in `docs/NOTES.md`.
+
+## 15. Roadmap
+
+1. **Validate demand:** 5–10 real publishers (game mods, Linux ISOs) try the button before more payment work.
+2. **Shared payments layer:** quote, wallet and possibly card payment, upload tracking and resume, receipts. It will be extracted from `src/lib/wallet.ts` and `src/lib/uploads.ts` into a reusable package.
+3. **Later front ends** on the same layer: photo albums, AutoVid (YouTube backup).
+
+## 16. Open questions
+
+- When will the browser SDK ship large downloads, and what will its memory limits be outside Chromium?
+- What are the Autonomi app's upload limits?
+- Who pays: the publisher up front, or a sponsor? Is a card on-ramp needed?
+- Do publishers expect a SHA-256 or GPG check line (section 12)?
+- Is the self-contained script button (section 13) wanted?
+- Public uploads are permanent and the payment links the file to the paying wallet. What should we tell publishers?
