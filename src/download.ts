@@ -387,6 +387,10 @@ function errorCopy(info: FriendlyError, action: typeof retryAction): { title: st
     case "DOWNLOAD_FAILED":
       return { title: "The download didn't finish", text: "Some chunks couldn't be fetched or verified. This is often temporary, so try again." };
     case "SAVE_FAILED":
+      // streamAndSave throws this before any download when the browser won't open the save window.
+      if (/save picker|save destination/i.test(info.message)) {
+        return { title: "The save window didn't open", text: "Your browser didn't let this page ask where to save the file. Click Download again." };
+      }
       return { title: "The file couldn't be saved", text: "It downloaded, but your browser couldn't write it. Check you have space and permission to save there." };
     default:
       return { title: "Something went wrong", text: info.message };
