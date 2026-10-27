@@ -93,7 +93,7 @@ Validate everything read from the URL: `a` must match `^[0-9a-f]{64}$`. Sanitise
 3. Check result:
    - Connect (reuse one client for the page), call `openFile(address)`, read `.size`, then `close()`.
    - Success: "Found · 312.4 MB · verified DataMap". Store the size.
-   - Over 1 GB: still "Found", with embed code, plus a note: files over 1 GB download in Chrome or Edge on a computer; other browsers will suggest one of those or the ant command-line tool.
+   - Over 1 GB: still "Found", with embed code, plus a note: files over 1 GB download in Chrome or Edge on a computer; other browsers will suggest one of those or the [Autonomi App](https://docs.autonomi.com/node/downloads).
    - Not found or failed: show the SDK error code and message, and suggest checking it's a **public file** address, not an archive.
    - While connecting: "Connecting to Autonomi…" The first connect can take several seconds.
 4. **Style** radio: Light / Dark / Minimal (text link). Live preview of the button beneath, rendered from the exact snippet that will be copied.
@@ -374,7 +374,7 @@ The engine (about 2 MB compressed) loads only when someone clicks. Optionally, l
 
 ## 14. Size limits (updated 2026-10-27)
 
-- **Downloads:** SDK 0.1.3 (2026-10-27) adds `streamAndSave()` with no size cap. The download page uses it whenever the browser has the save picker (desktop Chrome and Edge), for every size. Other browsers use the buffered `downloadAndSave()` and stop at 1 GB with a message suggesting Chrome or Edge on a computer, or the ant command-line tool. A 64 MB sample was saved byte-identical through both paths in headless Edge; a real file over 1 GB is still untested (see the test plan in `docs/NOTES.md`).
+- **Downloads:** SDK 0.1.3 (2026-10-27) adds `streamAndSave()` with no size cap. The download page uses it whenever the browser has the save picker (desktop Chrome and Edge), for every size. Other browsers use the buffered `downloadAndSave()` and stop at 1 GB with a message suggesting Chrome or Edge on a computer, or the [Autonomi App](https://docs.autonomi.com/node/downloads) (the `ant-ui` desktop app for Windows, Mac and Linux, which downloads files by address). It's easier for most people than the ant command-line tool. A 64 MB sample was saved byte-identical through both paths in headless Edge; a real file over 1 GB is still untested (see the test plan in `docs/NOTES.md`).
 - **Uploads, three paths:**
 
 | Path | Cap |

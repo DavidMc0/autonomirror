@@ -346,17 +346,17 @@ function setButton(mode: "connecting" | "ready"): void {
   setText($("download-label"), mode === "ready" ? "Download" : "Connecting…");
 }
 
-function showBlocked(title: string, text: string, cliLink = false): void {
+function showBlocked(title: string, text: string, appLink = false): void {
   setText($("blocked-title"), title);
   setText($("blocked-text"), text);
-  $("blocked-cli").hidden = !cliLink;
+  $("blocked-app").hidden = !appLink;
   setState("blocked");
 }
 
 function showTooLarge(size: number): void {
   showBlocked(
     "This file is too large for this browser",
-    `It's ${formatBytes(size)}. This browser can download files up to ${formatBytes(MAX_BUFFERED_DOWNLOAD_BYTES)} from Autonomi. Open this page in Chrome or Edge on a computer, which can save larger files straight to disk, or use the Autonomi command-line tool (ant).`,
+    `It's ${formatBytes(size)}. This browser can download files up to ${formatBytes(MAX_BUFFERED_DOWNLOAD_BYTES)} from Autonomi. Open this page in Chrome or Edge on a computer, which can save larger files straight to disk, or download it with the Autonomi App using the file's address (copy it above).`,
     true,
   );
 }

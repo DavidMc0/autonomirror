@@ -18,7 +18,7 @@ const SAMPLES: Record<string, { address: string; name: string }> = {
   large: { address: "f6eeba94008f493a8518186b0647df6d39dbde75f41d5b79549e9a4e63a1ab43", name: "64 MB of random bytes.bin" },
 };
 const PLACEHOLDER_NAME = "my-mod-v1.2.zip";
-const CLI_URL = "https://github.com/WithAutonomi/ant-client#installation";
+const APP_URL = "https://docs.autonomi.com/node/downloads";
 
 type Check =
   | { status: "idle" }
@@ -164,10 +164,10 @@ function renderCheck(): void {
         result.replaceChildren(icon("✓"), found);
         break;
       }
-      const cli = el("a", "", "Autonomi command-line tool (ant) ↗") as HTMLAnchorElement;
-      cli.href = CLI_URL;
-      cli.target = "_blank";
-      cli.rel = "noopener";
+      const app = el("a", "", "Autonomi App ↗") as HTMLAnchorElement;
+      app.href = APP_URL;
+      app.target = "_blank";
+      app.rel = "noopener";
       result.replaceChildren(
         icon("✓"),
         el(
@@ -178,7 +178,7 @@ function renderCheck(): void {
             "p",
             "muted",
             `Files over ${formatBytes(MAX_BUFFERED_DOWNLOAD_BYTES)} download in Chrome or Edge on a computer. Other browsers will suggest one of those, or the `,
-            cli,
+            app,
             ".",
           ),
         ),
