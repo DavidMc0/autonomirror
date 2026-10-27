@@ -2,7 +2,16 @@ import "./styles.css";
 import "./download.css";
 import { getBrowserCapabilities, type AutonomiClient, type ProgressEvent } from "@withautonomi/ant-browser-sdk";
 import { shortenAddress } from "./lib/address";
-import { closeClient, connectedClient, describeError, getClient, MAX_DOWNLOAD_BYTES, oversizedFileBytes, type FriendlyError } from "./lib/client";
+import {
+  canStreamToDisk,
+  closeClient,
+  connectedClient,
+  describeError,
+  getClient,
+  MAX_BUFFERED_DOWNLOAD_BYTES,
+  tooLargeHere,
+  type FriendlyError,
+} from "./lib/client";
 import { drawConstellation, type Constellation } from "./lib/constellation";
 import { formatBytes, formatExactBytes } from "./lib/format";
 import { parseDownloadParams, type DownloadParams } from "./lib/params";
@@ -155,15 +164,8 @@ async function verify(client: AutonomiClient): Promise<void> {
       },
     });
   } catch (err) {
-    const oversized = oversizedFileBytes(err);
-    if (oversized !== undefined) {
-      verifiedSize = oversized;
-      renderSize();
-    }
     // A download already started takes precedence over a failed pre-check.
-    if (state !== "ready") return;
-    if (oversized !== undefined) showTooLarge(oversized);
-    else showError(describeError(err), "verify");
+    if (state === "ready") showError(describeError(err), "verify");
     return;
   }
   verifiedSize = reader.size;
@@ -171,11 +173,12 @@ async function verify(client: AutonomiClient): Promise<void> {
   renderSize();
   if (state !== "ready") return;
 
-  if (verifiedSize > MAX_DOWNLOAD_BYTES) {
+  if (tooLargeHere(verifiedSize)) {
     showTooLarge(verifiedSize);
     return;
   }
-  $("memory-warning").hidden = !(isPhone() && verifiedSize > PHONE_WARN_BYTES);
+  // Streamed saves don't hold the file in memory.
+  $("memory-warning").hidden = !(!canStreamToDisk() && isPhone() && verifiedSize > PHONE_WARN_BYTES);
   setStatus("ready", "Ready to download", "Found the file and verified its DataMap.");
 }
 
@@ -200,23 +203,31 @@ async function startDownload(): Promise<void> {
   $("cancelled-note").hidden = true;
   setState("downloading");
   resetProgress();
+  const options = {
+    suggestedName: params.name,
+    signal: controller.signal,
+    onProgress: (e: ProgressEvent) => renderProgress(e, started),
+  };
   try {
-    // Must be the first await so the save picker still counts as a user action.
-    const { download, save } = await client.downloadAndSave(params.address, {
-      suggestedName: params.name,
-      signal: controller.signal,
-      onProgress: (e) => renderProgress(e, started),
-    });
-    verifiedSize = download.bytes.byteLength;
-    chunkTotal = download.file.chunks.length || chunkTotal;
-    renderSize();
-    showDone(download.hash, save.method, save.name, download.bytes.byteLength, performance.now() - started);
-  } catch (err) {
-    const oversized = oversizedFileBytes(err);
-    if (oversized !== undefined) {
-      verifiedSize = oversized;
+    // The SDK call must be the first await so the save picker still counts as a user action.
+    if (canStreamToDisk()) {
+      const saved = await client.streamAndSave(params.address, options);
+      verifiedSize = saved.bytesWritten;
       renderSize();
-      showTooLarge(oversized);
+      // Without a destination of our own, streamAndSave always saves through the picker.
+      showDone(saved.hash, "file-picker", saved.name, saved.bytesWritten, performance.now() - started);
+    } else {
+      const { download, save } = await client.downloadAndSave(params.address, options);
+      verifiedSize = download.bytes.byteLength;
+      chunkTotal = download.file.chunks.length || chunkTotal;
+      renderSize();
+      showDone(download.hash, save.method, save.name, download.bytes.byteLength, performance.now() - started);
+    }
+  } catch (err) {
+    // Clicked before the size check finished, on a file too large to hold in memory.
+    const size = verifiedSize ?? params.size;
+    if (size !== undefined && tooLargeHere(size)) {
+      showTooLarge(size);
       return;
     }
     const info = describeError(err);
@@ -263,18 +274,24 @@ function paintGrid(completed: number): void {
 }
 
 function renderProgress(e: ProgressEvent, started: number): void {
-  if (state !== "downloading" || e.status !== "running") return;
+  // "complete" messages use the SDK's generated file name; the done state follows anyway.
+  if (state !== "downloading" || e.status !== "running" || e.phase === "complete") return;
   const p = readProgress(e);
   const bar = $("progress-bar");
 
-  if (e.phase === "saving") {
+  // A streamed save reports its progress as bytes saved, handled below with the other byte counts.
+  if (e.phase === "saving" && p.unit !== "bytes") {
     setText($("progress-title"), "Saving…");
     setText($("progress-message"), e.message.startsWith("Choosing") ? "Choose where to save the file" : "Writing the file");
     return;
   }
 
   if (p.fraction === undefined || p.total === undefined || p.completed === undefined) {
-    setText($("progress-message"), p.message);
+    // Opening messages name the SDK's generated file name, not the one in the link.
+    if (e.phase === "opening") {
+      setText($("progress-title"), "Finding the file…");
+      setText($("progress-message"), "Reading its DataMap from the network");
+    } else setText($("progress-message"), p.message);
     return;
   }
 
@@ -285,6 +302,9 @@ function renderProgress(e: ProgressEvent, started: number): void {
     setText($("progress-title"), "Fetching chunks");
     setText($("progress-message"), `Fetched ${p.completed} of ${p.total} chunk${p.total === 1 ? "" : "s"}`);
   } else {
+    // Streamed saves only report bytes, so light the chunk grid in proportion.
+    if (gridTotal > 0) paintGrid(p.fraction * gridTotal);
+    if (e.phase === "saving") setText($("progress-title"), "Downloading and saving");
     setText($("progress-message"), `${formatBytes(p.completed)} of ${formatBytes(p.total)}`);
   }
 
@@ -335,8 +355,8 @@ function showBlocked(title: string, text: string, cliLink = false): void {
 
 function showTooLarge(size: number): void {
   showBlocked(
-    "This file is too large for a browser download",
-    `It's ${formatBytes(size)}. Browsers can download files up to ${formatBytes(MAX_DOWNLOAD_BYTES)} from Autonomi, so use the Autonomi command-line tools (ant) for this one.`,
+    "This file is too large for this browser",
+    `It's ${formatBytes(size)}. This browser can download files up to ${formatBytes(MAX_BUFFERED_DOWNLOAD_BYTES)} from Autonomi. Open this page in Chrome or Edge on a computer, which can save larger files straight to disk, or use the Autonomi command-line tool (ant).`,
     true,
   );
 }

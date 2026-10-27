@@ -12,7 +12,7 @@ import {
   type UploadRecovery,
   type UploadResult,
 } from "@withautonomi/ant-browser-sdk";
-import { describeError, getClient, MAX_DOWNLOAD_BYTES } from "./lib/client";
+import { describeError, getClient, MAX_UPLOAD_BYTES } from "./lib/client";
 import { formatAnt, formatBytes, formatExactBytes } from "./lib/format";
 import { $, applyState, bindCopy, setText } from "./lib/ui";
 import { loadUploads, saveUpload, type SavedUpload } from "./lib/uploads";
@@ -106,10 +106,10 @@ function choose(picked: File): void {
   setText($("up-file-size"), formatBytes(picked.size));
   $("up-file-size").title = formatExactBytes(picked.size);
 
-  if (picked.size > MAX_DOWNLOAD_BYTES) {
+  if (picked.size > MAX_UPLOAD_BYTES) {
     return showError(
       "This file is too large",
-      `It's ${formatBytes(picked.size)}. Browser uploads are limited to ${formatBytes(MAX_DOWNLOAD_BYTES)}, so use the Autonomi command-line tool (ant) for this one.`,
+      `It's ${formatBytes(picked.size)}. Browser uploads are limited to ${formatBytes(MAX_UPLOAD_BYTES)}, so use the Autonomi command-line tool (ant) for this one.`,
       "TOO_LARGE",
       false,
     );

@@ -228,14 +228,6 @@
   background: var(--ok);
   color: #0a1020;
 }
-.check-result.is-too-large {
-  background: var(--warn-soft);
-  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
-}
-.check-result.is-too-large .check-icon {
-  background: var(--warn);
-  color: #0a1020;
-}
 .check-result.is-failed {
   background: var(--bad-soft);
   border-color: color-mix(in srgb, var(--bad) 40%, transparent);

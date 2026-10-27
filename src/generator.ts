@@ -1,7 +1,7 @@
 import "./styles.css";
 import "./generator.css";
 import { extractAddress, hexCount } from "./lib/address";
-import { describeError, getClient, MAX_DOWNLOAD_BYTES, oversizedFileBytes } from "./lib/client";
+import { describeError, getClient, MAX_BUFFERED_DOWNLOAD_BYTES } from "./lib/client";
 import { formatBytes, formatExactBytes } from "./lib/format";
 import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBaseUrl, type PageView } from "./lib/params";
 import { htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
@@ -24,7 +24,6 @@ type Check =
   | { status: "idle" }
   | { status: "checking"; address: string }
   | { status: "ok"; address: string; size: number }
-  | { status: "too-large"; address: string; size: number }
   | { status: "failed"; address: string; code: string; message: string; forced: boolean };
 
 const siteBase = siteBaseUrl();
@@ -125,16 +124,11 @@ async function runCheck(): Promise<void> {
     const size = reader.size;
     reader.close();
     if (seq !== checkSeq) return;
-    check = size > MAX_DOWNLOAD_BYTES ? { status: "too-large", address: addr, size } : { status: "ok", address: addr, size };
+    check = { status: "ok", address: addr, size };
   } catch (err) {
     if (seq !== checkSeq) return;
-    const oversized = oversizedFileBytes(err);
-    if (oversized !== undefined) {
-      check = { status: "too-large", address: addr, size: oversized };
-    } else {
-      const info = describeError(err);
-      check = { status: "failed", address: addr, code: info.code, message: info.message, forced: false };
-    }
+    const info = describeError(err);
+    check = { status: "failed", address: addr, code: info.code, message: info.message, forced: false };
   }
   render();
 }
@@ -165,25 +159,28 @@ function renderCheck(): void {
     case "ok": {
       const size = el("strong", "", formatBytes(check.size));
       size.title = formatExactBytes(check.size);
-      result.replaceChildren(icon("✓"), el("span", "", "Found · ", size, " · verified DataMap"));
-      break;
-    }
-    case "too-large": {
+      const found = el("span", "", "Found · ", size, " · verified DataMap");
+      if (check.size <= MAX_BUFFERED_DOWNLOAD_BYTES) {
+        result.replaceChildren(icon("✓"), found);
+        break;
+      }
       const cli = el("a", "", "Autonomi command-line tool (ant) ↗") as HTMLAnchorElement;
       cli.href = CLI_URL;
       cli.target = "_blank";
       cli.rel = "noopener";
       result.replaceChildren(
-        icon("!"),
+        icon("✓"),
         el(
           "div",
           "check-body",
+          el("p", "", found),
           el(
             "p",
-            "",
-            `This file is ${formatBytes(check.size)}. The browser download limit is ${formatBytes(MAX_DOWNLOAD_BYTES)}, so it can't be used in this demo.`,
+            "muted",
+            `Files over ${formatBytes(MAX_BUFFERED_DOWNLOAD_BYTES)} download in Chrome or Edge on a computer. Other browsers will suggest one of those, or the `,
+            cli,
+            ".",
           ),
-          el("p", "muted", "People can still download it with the ", cli, "."),
         ),
       );
       break;
@@ -259,7 +256,6 @@ function renderEmbed(): void {
   if (!address()) {
     lockedText = radio("source") === "upload" ? "Upload a file to get your embed code." : "Paste an address and check it to get your embed code.";
   }
-  else if (check.status === "too-large") lockedText = "This file is over the 1 GB browser limit, so there's no embed code for it.";
   else if (!ready) lockedText = "Check your address to get the embed code.";
   else if (!name) lockedText = "Add a file name to get the embed code.";
 
