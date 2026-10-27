@@ -4,7 +4,7 @@ Turn any public [Autonomi](https://autonomi.com/?ref=download-button-demo) file 
 
 **Live demo:** https://davidmc0.github.io/autonomirror/
 
-This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https://github.com/WithAutonomi/ant-browser-sdk) 0.1.3.
+This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https://github.com/WithAutonomi/ant-browser-sdk) 0.1.4.
 
 ## How it works
 

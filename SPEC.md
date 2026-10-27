@@ -29,7 +29,7 @@ Hand this file to Claude Code as the build brief. Target: a static site, buildab
 
 | Fact | Detail |
 | --- | --- |
-| Package | `@withautonomi/ant-browser-sdk`, version **0.1.3** on npm (0.1.0 at launch). Pin it exactly. The GitHub README sometimes says `@withautonomi/browser-sdk`; that name is **not** on npm. |
+| Package | `@withautonomi/ant-browser-sdk`, version **0.1.4** on npm (0.1.0 at launch; 0.1.4 only rebuilds the WASM for faster Chromium downloads). Pin it exactly. The GitHub README sometimes says `@withautonomi/browser-sdk`; that name is **not** on npm. |
 | Licence | MIT or Apache-2.0 |
 | Module format | ESM only; loads a WASM file and (for uploads only) a worker via `new URL(..., import.meta.url)`. Vite handles this. |
 | Mainnet seeds | Bundled: `AutonomiClient.connect()` with **no arguments** connects to mainnet via 7 certificate-pinned WebRTC seeds. No RPC, wallet or config needed for downloads. |
@@ -204,7 +204,7 @@ Close the client on `pagehide`.
 
 ```
 autonomi-download-button/
-├─ package.json            # vite, typescript, @withautonomi/ant-browser-sdk (exact 0.1.3)
+├─ package.json            # vite, typescript, @withautonomi/ant-browser-sdk (exact 0.1.4)
 ├─ vite.config.ts          # multi-page: index.html + d/index.html
 ├─ index.html              # generator
 ├─ d/index.html            # download page
