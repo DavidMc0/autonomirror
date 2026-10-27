@@ -4,7 +4,7 @@ Turn any public [Autonomi](https://autonomi.com/?ref=download-button-demo) file 
 
 **Live demo:** https://davidmc0.github.io/autonomirror/
 
-This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https://github.com/WithAutonomi/ant-browser-sdk) 0.1.0.
+This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https://github.com/WithAutonomi/ant-browser-sdk) 0.1.3.
 
 ## How it works
 
@@ -73,7 +73,7 @@ Make sure `.wasm` files are served as `application/wasm`. All of the hosts above
 ## Known limits
 
 - **Experimental.** The SDK and protocol are early. The SDK version is pinned, and a network upgrade may require updating it.
-- **1 GB maximum.** The SDK refuses larger downloads, and the whole file is held in memory while it downloads. Phones get a warning above 300 MB.
+- **Large files need Chrome or Edge on a computer.** Those browsers stream downloads of any size straight to disk. Firefox, Safari and phones hold the whole file in memory, so they stop at 1 GB, and phones get a warning above 300 MB. Uploads are limited to 1 GB.
 - **Uploads need a browser wallet** with ANT and a little ETH on Arbitrum One; there's no card payment yet. Wallet approvals are for the exact amount of each upload. Getting prices can take a minute or two, and a page reload during an upload loses the SDK's retry state (a finished upload is kept). On phones, use a wallet app's built-in browser.
 - **Uploads are public and permanent**, and the payment links an upload to the paying wallet on the Arbitrum blockchain.
 - **Public files only.** Archives (folder uploads) and private files aren't supported. The file name comes from the link, not the network.

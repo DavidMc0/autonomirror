@@ -1,24 +1,26 @@
-import { describe, expect, it } from "vitest";
-import { AutonomiError } from "@withautonomi/ant-browser-sdk";
-import { oversizedFileBytes } from "../src/lib/client";
+import { describe, expect, it, vi } from "vitest";
+import { MAX_BUFFERED_DOWNLOAD_BYTES, MAX_UPLOAD_BYTES, tooLargeHere } from "../src/lib/client";
 
-describe("oversizedFileBytes", () => {
-  it("reads the size from the SDK's open-file error", () => {
-    // openFile wraps the core's string error like this.
-    const err = new AutonomiError("OPEN_FILE_FAILED", "Could not open the public file: invalid public file size 3200000000", "invalid public file size 3200000000");
-    expect(oversizedFileBytes(err)).toBe(3_200_000_000);
+let streamable = false;
+vi.mock("@withautonomi/ant-browser-sdk", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  getBrowserCapabilities: () => ({ operations: { streamAndSave: { available: streamable, missing: [] } } }),
+}));
+
+describe("size limits", () => {
+  it("keeps the 1 GB caps for uploads and in-memory downloads", () => {
+    expect(MAX_UPLOAD_BYTES).toBe(1_000_000_000);
+    expect(MAX_BUFFERED_DOWNLOAD_BYTES).toBe(1_000_000_000);
   });
 
-  it("finds the size in a wrapped cause", () => {
-    const err = new Error("Download failed", { cause: new Error("invalid public file size 1000000001") });
-    expect(oversizedFileBytes(err)).toBe(1_000_000_001);
+  it("refuses files over 1 GB where the browser can't stream to disk", () => {
+    streamable = false;
+    expect(tooLargeHere(1_000_000_000)).toBe(false);
+    expect(tooLargeHere(1_000_000_001)).toBe(true);
   });
 
-  it("ignores other errors and sizes within the limit", () => {
-    expect(oversizedFileBytes(new AutonomiError("OPEN_FILE_FAILED", "Could not open the public file: record not found"))).toBeUndefined();
-    expect(oversizedFileBytes(new Error("invalid public file size 2"))).toBeUndefined();
-    expect(oversizedFileBytes(new Error("invalid public file size 1000000000"))).toBeUndefined();
-    expect(oversizedFileBytes("invalid public file size 3200000000")).toBeUndefined();
-    expect(oversizedFileBytes(undefined)).toBeUndefined();
+  it("allows any size where the browser can stream to disk", () => {
+    streamable = true;
+    expect(tooLargeHere(4_300_000_000)).toBe(false);
   });
 });

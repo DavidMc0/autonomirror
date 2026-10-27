@@ -1,7 +1,20 @@
-import { AutonomiClient, AutonomiError, SDK_LIMITS, type ProgressListener } from "@withautonomi/ant-browser-sdk";
+import { AutonomiClient, AutonomiError, getBrowserCapabilities, SDK_LIMITS, type ProgressListener } from "@withautonomi/ant-browser-sdk";
 
-/** Downloads above this are refused by the Rust core. */
-export const MAX_DOWNLOAD_BYTES: number = SDK_LIMITS.maxFileBytes;
+/** Uploads above this are refused by the Rust core. */
+export const MAX_UPLOAD_BYTES: number = SDK_LIMITS.maxUploadBytes;
+
+/** Browsers that can't stream to disk hold the whole file in memory, and the SDK refuses downloads above this. */
+export const MAX_BUFFERED_DOWNLOAD_BYTES: number = SDK_LIMITS.defaultDownloadMemoryBytes;
+
+/** True when the save picker lets downloads stream straight to disk, at any size (desktop Chromium). */
+export function canStreamToDisk(): boolean {
+  return getBrowserCapabilities().operations.streamAndSave.available;
+}
+
+/** True when this browser can't download a file of this size. */
+export function tooLargeHere(size: number): boolean {
+  return size > MAX_BUFFERED_DOWNLOAD_BYTES && !canStreamToDisk();
+}
 
 let pending: Promise<AutonomiClient> | null = null;
 let current: AutonomiClient | null = null;
@@ -24,7 +37,7 @@ export function getClient(onProgress?: ProgressListener): Promise<AutonomiClient
   return pending;
 }
 
-/** The connected client, or null. Lets click handlers avoid awaiting before downloadAndSave. */
+/** The connected client, or null. Lets click handlers avoid awaiting before the SDK opens the save picker. */
 export function connectedClient(): AutonomiClient | null {
   return current && !current.closed ? current : null;
 }
@@ -33,22 +46,6 @@ export function closeClient(): void {
   current?.close();
   current = null;
   pending = null;
-}
-
-/**
- * The size of a file the SDK refused for being over the browser limit, or undefined.
- * The core checks the size while opening the file, so it never returns a reader with
- * a large `.size`; the size only arrives in the error text ("invalid public file size N").
- */
-export function oversizedFileBytes(err: unknown): number | undefined {
-  for (let e = err; e instanceof Error; e = e.cause) {
-    const match = /invalid public file size (\d+)/.exec(e.message);
-    if (match) {
-      const size = Number(match[1]);
-      return size > MAX_DOWNLOAD_BYTES ? size : undefined;
-    }
-  }
-  return undefined;
 }
 
 export interface FriendlyError {

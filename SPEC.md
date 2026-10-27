@@ -19,7 +19,7 @@ Hand this file to Claude Code as the build brief. Target: a static site, buildab
 **Out of scope (do not build)**
 
 - Card/fiat payments, accounts, databases, analytics (payments beyond the wallet wait for the roadmap in section 15).
-- Files over 1 GB for now (the browser SDK refuses them; show a clear message). See section 14.
+- Downloads over 1 GB in browsers without the save picker (Firefox, Safari, phones). They get a clear message pointing to Chrome or Edge on a computer. See section 14.
 - Private files / DataMaps, archives (directory uploads), media streaming.
 - Any backend. Everything is static files for now. The server-side uploads (section 14) and payments layer (section 15) are roadmap items, not current work.
 
@@ -29,15 +29,15 @@ Hand this file to Claude Code as the build brief. Target: a static site, buildab
 
 | Fact | Detail |
 | --- | --- |
-| Package | `@withautonomi/ant-browser-sdk`, version **0.1.0** on npm. Pin it exactly. The GitHub README sometimes says `@withautonomi/browser-sdk`; that name is **not** on npm. |
+| Package | `@withautonomi/ant-browser-sdk`, version **0.1.3** on npm (0.1.0 at launch). Pin it exactly. The GitHub README sometimes says `@withautonomi/browser-sdk`; that name is **not** on npm. |
 | Licence | MIT or Apache-2.0 |
 | Module format | ESM only; loads a WASM file and (for uploads only) a worker via `new URL(..., import.meta.url)`. Vite handles this. |
 | Mainnet seeds | Bundled: `AutonomiClient.connect()` with **no arguments** connects to mainnet via 7 certificate-pinned WebRTC seeds. No RPC, wallet or config needed for downloads. |
-| Size limit | Downloads are refused above **1,000,000,000 bytes**, enforced in the Rust core. |
+| Size limit | Since 0.1.3, streamed saves (`streamAndSave`) have no size cap. Buffered downloads (`downloadAndSave`) are refused above `maxMemoryBytes`, which defaults to **1,000,000,000 bytes** (`SDK_LIMITS.defaultDownloadMemoryBytes`). Uploads stay capped at 1 GB (`SDK_LIMITS.maxUploadBytes`). |
 | File names | **Not stored on the network.** A public address resolves to a DataMap only; the SDK falls back to a generated name. The button URL must carry the file name. |
 | Address type | A public file's **DataMap address**: 64 hex characters, as printed by `ant file upload --public`. Archive (directory) addresses won't work. |
 | Integrity | `download()` verifies every chunk and the whole file (BLAKE3) before returning. |
-| Save flow | `client.downloadAndSave(address, { suggestedName })` opens `showSaveFilePicker()` first **if called directly in a click handler**, then downloads and writes. Browsers without the picker fall back to an `<a download>` save. The whole file is held in memory. |
+| Save flow | `client.downloadAndSave(address, { suggestedName })` opens `showSaveFilePicker()` first **if called directly in a click handler**, then downloads and writes. Browsers without the picker fall back to an `<a download>` save. The whole file is held in memory. `client.streamAndSave(address, { suggestedName })` (0.1.3) opens the picker the same way, then streams to disk with bounded memory; it fails without the picker (Firefox, Safari, Android). |
 | Metadata | `client.openFile(address)` returns a reader with `.size` (from the verified DataMap) without downloading the file; call `.close()` after. |
 | Progress | `onProgress` events carry `phase`, `message`, and optionally `completed` / `total` / `unit` (`bytes`, `records`). |
 | Requirements | Secure context (HTTPS or localhost), WebAssembly, `RTCPeerConnection`. Networks that block UDP will fail to connect. |
@@ -93,7 +93,7 @@ Validate everything read from the URL: `a` must match `^[0-9a-f]{64}$`. Sanitise
 3. Check result:
    - Connect (reuse one client for the page), call `openFile(address)`, read `.size`, then `close()`.
    - Success: "Found · 312.4 MB · verified DataMap". Store the size.
-   - Over 1 GB: "This file is 3.2 GB. The browser download limit is 1 GB, so it can't be used in this demo."
+   - Over 1 GB: still "Found", with embed code, plus a note: files over 1 GB download in Chrome or Edge on a computer; other browsers will suggest one of those or the [Autonomi App](https://docs.autonomi.com/node/downloads).
    - Not found or failed: show the SDK error code and message, and suggest checking it's a **public file** address, not an archive.
    - While connecting: "Connecting to Autonomi…" The first connect can take several seconds.
 4. **Style** radio: Light / Dark / Minimal (text link). Live preview of the button beneath, rendered from the exact snippet that will be copied.
@@ -151,11 +151,11 @@ All snippets use **inline styles only** (no external CSS, no script), so they pa
 2. Render the file card: name, size (from `s` if present), a shortened address with a copy button, and the line "This file will be fetched directly from Autonomi nodes by your browser."
 3. Run a capability check with `getBrowserCapabilities()`. If `operations.download` isn't available, show which features are missing.
 4. **Start connecting immediately** (`AutonomiClient.connect()`). Keep the Download button disabled with the label "Connecting…" until the connection is ready.
-5. Once connected, call `openFile()` to fetch the verified size, update the card, and close the reader. Size over 1 GB → blocked state. On a phone (`navigator.deviceMemory <= 4` or a mobile user agent) with a file over 300 MB, show a memory warning without blocking.
+5. Once connected, call `openFile()` to fetch the verified size, update the card, and close the reader. Size over 1 GB in a browser that can't stream to disk (`getBrowserCapabilities().operations.streamAndSave`) → blocked state. Without streaming, on a phone (`navigator.deviceMemory <= 4` or a mobile user agent) with a file over 300 MB, show a memory warning without blocking.
 
 **Why connect first:** `downloadAndSave()` must be the first `await` in the click handler, so the browser still counts it as a user action and opens the save dialog. If the handler awaits `connect()` first, the picker is lost and the save silently falls back to the anchor download.
 
-**Click handler (sketch):**
+**Click handler (sketch).** Where `streamAndSave` is available (desktop Chromium), the handler calls `client.streamAndSave()` instead, for every size; its progress arrives as `saving` events in bytes. Elsewhere:
 
 ```ts
 button.addEventListener("click", async () => {
@@ -186,7 +186,7 @@ Expose `controller.abort()` as a Cancel button while downloading.
 | `ready` | Enabled "Download" button |
 | `downloading` | Progress bar + text. Use `completed/total` when `unit === "records"` ("Fetched 142 of 310 chunks") or `bytes`; otherwise show `message` in an indeterminate bar. Cancel button. |
 | `done` | "Saved and verified. Every chunk was checked against its Autonomi address." Show the BLAKE3 hash (copyable) and a "Download again" button. |
-| `blocked` | Over 1 GB, or a missing browser capability; explain which. |
+| `blocked` | Over 1 GB in a browser that can't stream to disk, or a missing browser capability; explain which. |
 | `error` | Friendly message, the SDK `code` in small text, and Retry (reconnect if needed). If the connection failed, add: "Some networks block the connections this uses. Try another network or use the publisher's other mirrors." |
 
 **Other content on the page:**
@@ -204,7 +204,7 @@ Close the client on `pagehide`.
 
 ```
 autonomi-download-button/
-├─ package.json            # vite, typescript, @withautonomi/ant-browser-sdk (exact 0.1.0)
+├─ package.json            # vite, typescript, @withautonomi/ant-browser-sdk (exact 0.1.3)
 ├─ vite.config.ts          # multi-page: index.html + d/index.html
 ├─ index.html              # generator
 ├─ d/index.html            # download page
@@ -271,7 +271,7 @@ If the demo is deployed under a sub-path (for example GitHub Pages at `/<repo>/`
 - [ ] A snippet pasted into a blank HTML page on another origin opens the download page in a new tab.
 - [ ] The download page downloads and saves the small test file in Chrome, Firefox and Safari, and the saved file is byte-identical to the original.
 - [ ] Cancelling the save dialog returns to `ready` without an error.
-- [ ] A file over 1 GB is refused with a clear message on both pages.
+- [ ] A file over 1 GB downloads in Chrome/Edge desktop with bounded memory, and is refused with a clear message in other browsers.
 - [ ] A malformed or unknown address shows a friendly error, not a stack trace.
 - [ ] With UDP blocked (or offline), the page shows the "some networks block this" message.
 - [ ] No request other than static assets goes to the demo host during a download (check the browser's Network tab).
@@ -282,7 +282,7 @@ If the demo is deployed under a sub-path (for example GitHub Pages at `/<repo>/`
 ## 11. Known limits to state in the README
 
 - Experimental SDK and protocol: pin the version; a network upgrade may require updating it.
-- 1 GB maximum for now; the whole file is held in memory while downloading (see section 14).
+- Chrome and Edge on a computer stream files of any size to disk. Other browsers hold the whole file in memory and stop at 1 GB (see section 14).
 - Public files only; the file name comes from the link, not the network.
 - Download speed depends on the network and the visitor's connection.
 
@@ -290,7 +290,7 @@ If the demo is deployed under a sub-path (for example GitHub Pages at `/<repo>/`
 
 - A self-contained script button that downloads on the publisher's own page. See section 13.
 - An SVG badge for READMEs.
-- Streamed saving on Chromium (`openFile().stream()` into a `FileSystemWritableFileStream`) to avoid holding large files in memory.
+- ~~Streamed saving on Chromium~~ (done with SDK 0.1.3's `streamAndSave`, 2026-10-27).
 - A "copy SHA-256" line computed after download, for sites that publish SHA-256 checksums.
 
 ---
@@ -351,7 +351,7 @@ The engine (about 2 MB compressed) loads only when someone clicks. Optionally, l
 - **Scripts must be allowed.** GitHub READMEs, forums and most hosted CMSs strip them, so the link button stays the universal option. This is an "advanced" choice for people who run their own sites.
 - **Strict security policies may block it.** A Content Security Policy that doesn't allow `'wasm-unsafe-eval'` blocks the engine, and some policies restrict WebRTC. The component should detect the failure and reveal the fallback link.
 - **Not inside iframes.** Cross-origin iframes block the save dialog, and an iframe embed would still depend on the demo host, so iframes aren't used.
-- **The same limits as the download page apply:** HTTPS, 1 GB maximum, the whole file in memory, and networks that block UDP won't work.
+- **The same limits as the download page apply:** HTTPS, 1 GB maximum outside desktop Chromium (which streams to disk), and networks that block UDP won't work.
 - **Truly host-free isn't possible.** The engine code must be served from somewhere, because a browser can't load code from Autonomi without already running it.
 
 ### Generator changes
@@ -372,9 +372,9 @@ The engine (about 2 MB compressed) loads only when someone clicks. Optionally, l
 
 ---
 
-## 14. Size limits (checked 2026-10-26, untested)
+## 14. Size limits (updated 2026-10-27)
 
-- **Downloads:** the network and core no longer cap them. [ant-client PR #214](https://github.com/WithAutonomi/ant-client/pull/214) adds streaming `pipeTo` and range reads, shipped in ant-core v0.13.0. But `@withautonomi/ant-browser-sdk` 0.1.2 (latest on npm) and its main branch still cap downloads at 1,000,000,000 bytes ([limits.ts](https://github.com/WithAutonomi/ant-browser-sdk/blob/main/src/limits.ts)). This repo pins 0.1.1 and uses the in-memory `downloadAndSave`. Going over 1 GB needs a new SDK release, a bump to the pin, and streaming via `openFile().pipeTo()` on Chromium.
+- **Downloads:** SDK 0.1.3 (2026-10-27) adds `streamAndSave()` with no size cap. The download page uses it whenever the browser has the save picker (desktop Chrome and Edge), for every size. Other browsers use the buffered `downloadAndSave()` and stop at 1 GB with a message suggesting Chrome or Edge on a computer, or the [Autonomi App](https://docs.autonomi.com/node/downloads) (the `ant-ui` desktop app for Windows, Mac and Linux, which downloads files by address). It's easier for most people than the ant command-line tool. A 64 MB sample was saved byte-identical through both paths in headless Edge; a real file over 1 GB is still untested (see the test plan in `docs/NOTES.md`).
 - **Uploads, three paths:**
 
 | Path | Cap |
@@ -392,10 +392,11 @@ These are future plans, not current scope. Don't build them until David asks.
 1. **Validate demand:** 5–10 real publishers (game mods, Linux ISOs) try the button before more payment work.
 2. **Shared payments layer:** quote, wallet and possibly card payment, upload tracking and resume, receipts. It will be extracted from `src/lib/wallet.ts` and `src/lib/uploads.ts` into a reusable package.
 3. **Later front ends** on the same layer: photo albums, AutoVid (YouTube backup).
+4. **Large downloads outside Chromium:** a small standalone downloader (paste any Autonomi file address), or point people to the Autonomi App for files over 1 GB when they can't switch browsers.
 
 ## 16. Open questions
 
-- When will the browser SDK ship large downloads, and what will its memory limits be outside Chromium?
+- ~~When will the browser SDK ship large downloads?~~ (resolved 2026-10-27: SDK 0.1.3, Chromium desktop only.) How should Firefox and Safari get files over 1 GB? See roadmap item 4.
 - What are the Autonomi app's upload limits?
 - Who pays: the publisher up front, or a sponsor? Is a card on-ramp needed?
 - Do publishers expect a SHA-256 or GPG check line (section 12)?
