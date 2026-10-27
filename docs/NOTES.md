@@ -28,6 +28,12 @@ A shared log for everyone working on this repo. Add entries as `- YYYY-MM-DD [Au
   - Nodes: ant-node v0.23.0 (2026-10-16) and v0.23.1 (2026-10-23). The release notes don't mention size limits. https://github.com/WithAutonomi/ant-node/releases
   - This repo pins SDK 0.1.1 and uses the in-memory `downloadAndSave`, so >1 GB downloads won't work here yet.
 
+- 2026-10-27 [Claude] Large-download test on the live site (SDK 0.1.4), headless Edge streaming through a save picker that hashed each chunk and discarded it, with whole-browser private memory sampled every 15 s:
+  - ~2 GB file `13dc91c3…5722` (2,042,822,656 bytes): passed. It took 799 s (about 2.6 MB/s), and the SHA-256 `a0385787…6c61` matches David's original. Browser memory went from 414 MB at the start to a 589 MB peak and stayed flat throughout.
+  - ~4.6 GB file `ee8e1349…6b77` (4,601,491,456 bytes): failed twice at the same point, about 1.2 GB (27%), with `OPEN_FILE_FAILED … Missing chunk 0a87098ececb5751b90f039d492c80e2cde70fcb4e58a06e8561850ade2cb85f required for data reconstruction`. Before failing it ran at 3–3.9 MB/s, and memory peaked at 559 MB. One chunk seems to be missing from the network or unreachable; this isn't a page bug. Next: try that address with the Autonomi App or `ant file download`. If they fail too, re-upload the file.
+  - Without a save picker (the Firefox/Safari path), the 2 GB file correctly shows the "too large for this browser" message with the Autonomi App link. The generator finds the 4.6 GB file, shows the over-1 GB note and gives embed code.
+  - The mid-download failure showed "Couldn't find this file… the address may be mistyped", because streamed read failures come back as `OPEN_FILE_FAILED`. Fixed: once the file has been found, that code now shows the "download didn't finish" message.
+
 ## Next steps
 
 - 2026-10-26 [Grok Bot] Contact publishers from the shortlist once David approves the drafts.

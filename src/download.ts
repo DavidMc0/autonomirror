@@ -377,7 +377,9 @@ function errorCopy(info: FriendlyError, action: typeof retryAction): { title: st
   if (action === "connect") {
     return { title: "Couldn't reach the Autonomi network", text: "Your browser couldn't connect to any Autonomi nodes." };
   }
-  switch (info.code) {
+  // Once the file has been found, a streamed read failure is a missing chunk, not a bad address.
+  const code = action === "download" && verifiedSize !== undefined && info.code === "OPEN_FILE_FAILED" ? "DOWNLOAD_FAILED" : info.code;
+  switch (code) {
     case "OPEN_FILE_FAILED":
     case "LOOKUP_FAILED":
       return {
