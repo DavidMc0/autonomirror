@@ -390,7 +390,7 @@ The engine (about 2 MB compressed) loads only when someone clicks. Optionally, l
 These are future plans, not current scope. Don't build them until David asks.
 
 1. **Validate demand:** 5–10 real publishers (game mods, Linux ISOs) try the button before more payment work.
-2. **Shared payments layer:** quote, wallet and possibly card payment, upload tracking and resume, receipts. It will be extracted from `src/lib/wallet.ts` and `src/lib/uploads.ts` into a reusable package.
+2. **Shared payments layer:** quote, wallet and possibly card payment, upload tracking and resume, receipts. It will be extracted from `src/lib/wallet.ts` and `src/lib/uploads.ts` into a reusable package. Draft design for card-paid uploads (gateway, checks, pointers, blocklist): [`docs/GATEWAY-SPEC.md`](docs/GATEWAY-SPEC.md).
 3. **Later front ends** on the same layer: photo albums, AutoVid (YouTube backup).
 4. **Large downloads outside Chromium:** a small standalone downloader (paste any Autonomi file address), or point people to the Autonomi App for files over 1 GB when they can't switch browsers.
 
