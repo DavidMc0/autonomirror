@@ -68,7 +68,7 @@ function tidyAddress(): void {
     onAddressInput();
   }
 }
-document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"]').forEach((el) =>
+document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"], #show-address').forEach((el) =>
   el.addEventListener("change", render),
 );
 
@@ -215,7 +215,9 @@ function currentSize(): number | undefined {
 
 /** The preview falls back to a placeholder name until one is typed. */
 function snippetOptions(): SnippetOptions {
-  return { fileName: fileName() || PLACEHOLDER_NAME, size: currentSize() };
+  const showAddress = $<HTMLInputElement>("show-address").checked;
+  const addr = address() || SAMPLES.lucky.address;
+  return { fileName: fileName() || PLACEHOLDER_NAME, size: currentSize(), address: showAddress ? addr : undefined };
 }
 
 function downloadUrl(): string | null {
