@@ -743,3 +743,15 @@ textarea.input.code {
 .up-again {
   margin-top: 12px;
 }
+
+.show-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  font-weight: 400;
+  font-size: 14px;
+}
+.show-address input {
+  margin-top: 3px;
+}

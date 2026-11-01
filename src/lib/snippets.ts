@@ -11,6 +11,27 @@ export const MAX_LABEL_NAME = 40;
 export interface SnippetOptions {
   fileName: string;
   size?: number;
+  /** When set, a small "Autonomi address: …" line goes under the button, with the full address on hover. */
+  address?: string;
+}
+
+export const ADDRESS_LABEL = "Autonomi address:";
+
+/** "711c7e20…b7078a": enough to recognise, full form in the title. */
+export function shortAddress(address: string): string {
+  return address.length > 16 ? `${address.slice(0, 8)}…${address.slice(-6)}` : address;
+}
+
+/**
+ * Plain HTML (no script): the file's network address, so it can still be fetched
+ * with the Autonomi app if the download page ever moves or goes away.
+ */
+export function addressLine(address: string): string {
+  const full = escapeHtml(address);
+  return (
+    `<div style="margin-top:4px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;opacity:.7">` +
+    `${ADDRESS_LABEL} <span title="${full}">${escapeHtml(shortAddress(address))}</span></div>`
+  );
 }
 
 // Colours from Autonomi's public palette: navy #131c32, indigo #232a59, red #e91337, mint #97ffa0.
@@ -61,7 +82,12 @@ export function linkLabel(fileName: string): string {
 
 const sizeLabel = (size?: number) => (size === undefined ? "" : formatBytes(size, { compact: true }));
 
-export function htmlSnippet(style: ButtonStyle, url: string, { fileName, size }: SnippetOptions): string {
+export function htmlSnippet(style: ButtonStyle, url: string, options: SnippetOptions): string {
+  const button = buttonHtml(style, url, options);
+  return options.address ? `<div>\n${button}\n${addressLine(options.address)}\n</div>` : button;
+}
+
+function buttonHtml(style: ButtonStyle, url: string, { fileName, size }: SnippetOptions): string {
   const href = escapeHtml(url);
   const sizeText = sizeLabel(size);
   // A shortened name is still readable in full on hover.
@@ -88,7 +114,9 @@ export function htmlSnippet(style: ButtonStyle, url: string, { fileName, size }:
   ].join("\n");
 }
 
-export function markdownSnippet(url: string, { fileName, size }: SnippetOptions): string {
+export function markdownSnippet(url: string, { fileName, size, address }: SnippetOptions): string {
   const sizeText = sizeLabel(size);
-  return `[⬇ ${escapeMarkdown(linkLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}](${url})`;
+  const link = `[⬇ ${escapeMarkdown(linkLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}](${url})`;
+  // Markdown has no hover title, so the full address goes in a code span.
+  return address ? `${link}\n\n${ADDRESS_LABEL} \`${address}\`` : link;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BUTTON_STYLES, escapeHtml, escapeMarkdown, htmlSnippet, markdownSnippet, shortenName } from "../src/lib/snippets";
+import { ADDRESS_LABEL, BUTTON_STYLES, addressLine, escapeHtml, shortAddress, escapeMarkdown, htmlSnippet, markdownSnippet, shortenName } from "../src/lib/snippets";
 import { buildDownloadUrl } from "../src/lib/params";
 
 const A = "711c7e20006ff3e0ac6c1f3063286a0c1a3e4c409642e8c526173fa60bb7078a";
@@ -83,5 +83,36 @@ describe("file name in the label", () => {
 describe("escapeHtml", () => {
   it("escapes all five characters", () => {
     expect(escapeHtml(`<a href="x">'&'</a>`)).toBe("&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;");
+  });
+});
+
+describe("address line", () => {
+  it("shortens the address and keeps the full form in the title", () => {
+    expect(shortAddress(A)).toBe("711c7e20…b7078a");
+    const doc = new DOMParser().parseFromString(addressLine(A), "text/html");
+    const span = doc.querySelector("span[title]")!;
+    expect(span.getAttribute("title")).toBe(A);
+    expect(doc.body.textContent).toBe(`${ADDRESS_LABEL} 711c7e20…b7078a`);
+  });
+
+  it("is off by default", () => {
+    for (const style of BUTTON_STYLES) {
+      expect(htmlSnippet(style, URL_, { fileName: "lucky.jpg" })).not.toContain(ADDRESS_LABEL);
+    }
+    expect(markdownSnippet(URL_, { fileName: "lucky.jpg" })).not.toContain(ADDRESS_LABEL);
+  });
+
+  it.each(BUTTON_STYLES)("%s: goes under one unchanged link, plain HTML with no script", (style) => {
+    const plain = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1 });
+    const html = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1, address: A });
+    expect(html).toContain(plain);
+    expect(html).not.toMatch(/<script|<style|<link|class=|id=|on\w+=|javascript:/i);
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    expect(doc.querySelectorAll("a")).toHaveLength(1);
+    expect(doc.querySelector("a")!.nextElementSibling!.textContent).toContain(ADDRESS_LABEL);
+  });
+
+  it("adds the full address to Markdown as a code span", () => {
+    expect(markdownSnippet(URL_, { fileName: "lucky.jpg", address: A })).toMatch(new RegExp(`\\)\\n\\n${ADDRESS_LABEL} \`${A}\`$`));
   });
 });
