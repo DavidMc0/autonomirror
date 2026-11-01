@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ADDRESS_LABEL, BUTTON_STYLES, addressLine, escapeHtml, shortAddress, escapeMarkdown, htmlSnippet, markdownSnippet, shortenName } from "../src/lib/snippets";
+import { ADDRESS_HINT, ADDRESS_LABEL, BUTTON_STYLES, addressLine, escapeHtml, shortAddress, escapeMarkdown, htmlSnippet, markdownSnippet, shortenName } from "../src/lib/snippets";
 import { buildDownloadUrl } from "../src/lib/params";
 
 const A = "711c7e20006ff3e0ac6c1f3063286a0c1a3e4c409642e8c526173fa60bb7078a";
@@ -91,11 +91,12 @@ describe("address line", () => {
     expect(shortAddress(A)).toBe("711c7e20…b7078a");
     const doc = new DOMParser().parseFromString(addressLine(A), "text/html");
     const span = doc.querySelector("span[title]")!;
-    expect(span.getAttribute("title")).toBe(A);
+    expect(span.getAttribute("title")).toBe(`${A}. ${ADDRESS_HINT}`);
+    expect(ADDRESS_HINT).toBe("The file can also be downloaded through the Autonomi app using this address.");
     expect(doc.body.textContent).toBe(`${ADDRESS_LABEL} 711c7e20…b7078a`);
   });
 
-  it("is off by default", () => {
+  it("is only added when an address is passed (the generator passes one unless the toggle is off)", () => {
     for (const style of BUTTON_STYLES) {
       expect(htmlSnippet(style, URL_, { fileName: "lucky.jpg" })).not.toContain(ADDRESS_LABEL);
     }
@@ -114,5 +115,13 @@ describe("address line", () => {
 
   it("adds the full address to Markdown as a code span", () => {
     expect(markdownSnippet(URL_, { fileName: "lucky.jpg", address: A })).toMatch(new RegExp(`\\)\\n\\n${ADDRESS_LABEL} \`${A}\`$`));
+  });
+});
+
+describe("generator defaults", () => {
+  it("shows the address line by default", async () => {
+    const { readFileSync } = await import("node:fs");
+    const html = readFileSync(`${process.cwd()}/index.html`, "utf8");
+    expect(html).toMatch(/<input type="checkbox" id="show-address" checked \/>/);
   });
 });

@@ -11,11 +11,12 @@ export const MAX_LABEL_NAME = 40;
 export interface SnippetOptions {
   fileName: string;
   size?: number;
-  /** When set, a small "Autonomi address: …" line goes under the button, with the full address on hover. */
+  /** When set, a small "Autonomi address: …" line goes under the button, with the full address and a hint about the Autonomi app on hover. */
   address?: string;
 }
 
 export const ADDRESS_LABEL = "Autonomi address:";
+export const ADDRESS_HINT = "The file can also be downloaded through the Autonomi app using this address.";
 
 /** "711c7e20…b7078a": enough to recognise, full form in the title. */
 export function shortAddress(address: string): string {
@@ -27,7 +28,7 @@ export function shortAddress(address: string): string {
  * with the Autonomi app if the download page ever moves or goes away.
  */
 export function addressLine(address: string): string {
-  const full = escapeHtml(address);
+  const full = escapeHtml(`${address}. ${ADDRESS_HINT}`);
   return (
     `<div style="margin-top:4px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;opacity:.7">` +
     `${ADDRESS_LABEL} <span title="${full}">${escapeHtml(shortAddress(address))}</span></div>`
