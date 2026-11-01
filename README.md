@@ -70,16 +70,16 @@ The output is static files, so any static host with HTTPS works. HTTPS is requir
 
 Make sure `.wasm` files are served as `application/wasm`. All of the hosts above do this by default.
 
-- **Own domain:** to keep buttons working if the page ever moves host, serve it from a domain you own and set the repo variable `PUBLIC_ORIGIN`. See [docs/CUSTOM-DOMAIN.md](docs/CUSTOM-DOMAIN.md).
+- **Own domain:** the official site is served from `get.autonomirror.com`, so buttons keep working if the page moves host. Set it as the Pages custom domain and the deploy picks it up automatically; see [docs/CUSTOM-DOMAIN.md](docs/CUSTOM-DOMAIN.md). Forks can set their own.
 
 ## If Autonomirror disappears
 
-The files don't depend on this project. They're stored on the Autonomi network, and each visitor's browser fetches them directly from it. There is no Autonomirror server in between. What depends on this project is the download page the buttons link to. Anyone can bring it back:
+The files don't depend on this project. They're stored on the Autonomi network for the lifetime of the network, with no further fees, and downloads are always free. Each visitor's browser fetches them directly from it. There is no Autonomirror server in between. What depends on this project is the download page the buttons link to. Anyone can bring it back:
 
 1. **Rebuild the page.** Clone this repo (or a fork or archive of it), then with Node 22+ run `npm ci` and `npm run build`. Set `VITE_PUBLIC_ORIGIN` to the URL you'll host it at, and `BASE_PATH` if it's served from a sub-path.
-2. **Host `dist/` anywhere** that serves static files over HTTPS (GitHub Pages, Cloudflare Pages, Netlify, your own server). If the original domain is pointed at the new host, existing buttons work again without changes.
+2. **Host `dist/` anywhere** that serves static files over HTTPS (GitHub Pages, Cloudflare Pages, Netlify, your own server). If `get.autonomirror.com` (or whichever domain the buttons use) is pointed at the new host, existing buttons work again without changes.
 3. **Licence.** The code is dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), so you may copy, host, modify and redistribute it, including commercially.
-4. **Without any page at all**, a file can be fetched by its address. The address is in every download link (the `a=` part of `…/d/?a=<address>`) and, if the publisher turned it on, shown under the button. Open the [Autonomi app](https://autonomi.com), choose to download by address, and paste it. Or, with the `ant` command-line tool, run `ant file download <address> <output-file>` (check `ant file download --help`, as options vary between versions).
+4. **Without any page at all**, a file can be fetched by its address. The address is in every download link (the `a=` part of `…/d/?a=<address>`) and is shown under the button unless the publisher turned it off. Open the [Autonomi app](https://autonomi.com), choose to download by address, and paste it. Or, with the `ant` command-line tool, run `ant file download <address> <output-file>` (check `ant file download --help`, as options vary between versions).
 
 Buttons keep working wherever the page is hosted, as long as the domain they point at is renewed and pointed at a copy of the page.
 

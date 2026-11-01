@@ -1,21 +1,20 @@
-# Serving the buttons from an owned domain
+# Serving the buttons from get.autonomirror.com
 
-> **Decision for David:** no domain has been chosen or bought yet. `get.example.org` below is a **placeholder**. Pick and register a real domain (and set it to auto-renew) before following these steps.
+Embed snippets bake in the site's origin at build time. Without a custom domain that's the GitHub Pages address, so every button would depend on `davidmc0.github.io`. With `get.autonomirror.com` (a subdomain of `autonomirror.com`, which David owns), the buttons point at that domain. The page can then move to any static host (Cloudflare Pages, Netlify, a mirror) by changing one DNS record, and no publisher has to edit their embed code.
 
-Embed snippets bake in the site's origin at build time. Today that is the GitHub Pages address, so every button ever pasted depends on `davidmc0.github.io` staying up. With an owned domain the buttons point at that domain, and the page can move to any static host (Cloudflare Pages, Netlify, a mirror) by changing DNS. No publisher has to edit their embed code.
+Buttons keep working **as long as `autonomirror.com` is renewed**, so keep it on auto-renew.
 
-Buttons keep working only **as long as the domain is renewed**. Snippets made before the switch keep pointing at the old GitHub Pages address.
+**How the origin is set:** the deploy workflow takes `VITE_PUBLIC_ORIGIN` from the Pages settings. Once `get.autonomirror.com` is set as the Pages custom domain, new builds write that domain into embed snippets automatically. Until then they use the github.io address, so snippets never point at a domain whose DNS isn't live yet.
 
 ## Steps (GitHub Pages)
 
-1. Register the domain (placeholder: `get.example.org`). A subdomain of a domain David already controls also works.
-2. DNS: add a `CNAME` record `get` → `davidmc0.github.io`. For an apex domain use `A` records to GitHub's Pages IPs (185.199.108.153, .109.153, .110.153, .111.153) and `AAAA` if wanted. See GitHub's docs: "Managing a custom domain for your GitHub Pages site".
-3. Repo *Settings → Pages → Custom domain*: enter `get.example.org`, wait for the DNS check, then tick **Enforce HTTPS** (the SDK needs a secure context). With the Actions deploy, no `CNAME` file is needed in the repo; the setting is stored by GitHub.
-4. Optional but recommended: verify the domain under your account's *Settings → Pages* to stop takeovers.
-5. Repo *Settings → Secrets and variables → Actions → Variables*: add `PUBLIC_ORIGIN` = `https://get.example.org` (no trailing slash). The deploy workflow passes it as `VITE_PUBLIC_ORIGIN`. If unset, it falls back to the Pages origin.
-6. Re-run the *Deploy to GitHub Pages* workflow. With a custom domain the Pages base path becomes `/`, so links become `https://get.example.org/d/?a=…`.
-7. Check: open the generator, make a snippet, and confirm the link starts with the new domain.
+1. DNS for `autonomirror.com`: add a `CNAME` record with name `get` and target `davidmc0.github.io`. (If the DNS provider proxies traffic, e.g. Cloudflare, start with "DNS only" until GitHub has issued the certificate.)
+2. Repo *Settings → Pages → Custom domain*: enter `get.autonomirror.com` and save. Wait for the DNS check, then tick **Enforce HTTPS** (the SDK needs a secure context). With the Actions deploy, no `CNAME` file is needed in the repo; GitHub stores the setting.
+3. Recommended: verify `autonomirror.com` under your GitHub account's *Settings → Pages → Verified domains*, so no one else can claim its subdomains on Pages.
+4. Nothing else to set: the next deploy picks up the custom domain from the Pages settings. (If a host other than GitHub Pages is used, set `VITE_PUBLIC_ORIGIN=https://get.autonomirror.com` at build time.)
+5. Re-run the *Deploy to GitHub Pages* workflow. With a custom domain the Pages base path becomes `/`, so links become `https://get.autonomirror.com/d/?a=…`.
+6. Check: open https://get.autonomirror.com, make a snippet, and confirm the link starts with `https://get.autonomirror.com/`.
 
 ## Moving hosts later
 
-Build anywhere with `VITE_PUBLIC_ORIGIN=https://get.example.org BASE_PATH=/ npm run build`, upload `dist/`, and point the domain's DNS at the new host. Old snippets keep working because the URL doesn't change.
+Build anywhere with `VITE_PUBLIC_ORIGIN=https://get.autonomirror.com BASE_PATH=/ npm run build`, upload `dist/`, and point the `get` record at the new host. Existing buttons keep working because the URL doesn't change.
