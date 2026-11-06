@@ -187,28 +187,54 @@
 
 .address-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  margin-top: 18px;
-  padding: 6px 6px 6px 12px;
+  margin-top: 12px;
+  padding: 8px 8px 8px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
-.address-label {
-  font: 500 11px/1 var(--mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
 .address-value {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   color: var(--text-muted);
   font-size: 13px;
+  line-height: 1.5;
+}
+
+.app-route {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.app-route-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.app-route-text {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.app-route-steps {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.app-route-steps strong {
+  color: var(--text);
+}
+.app-route-note {
+  margin: 10px 0 0;
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .direct-line {
@@ -556,91 +582,4 @@
 }
 .how:not([open]) > summary {
   margin-bottom: 0;
-}
-
-.fineprint {
-  display: none;
-  margin: 14px 0 0;
-  text-align: center;
-  color: var(--text-faint);
-  font-size: 12.5px;
-  line-height: 1.6;
-}
-.fineprint a {
-  color: var(--text-muted);
-}
-.fineprint .sep {
-  margin: 0 8px;
-  opacity: 0.6;
-}
-
-/* ------------------------------------------------------------------ page views (?v=) */
-
-/* Medium: slim header strip, "How this works" collapsed. */
-[data-view="medium"] .file-hero {
-  height: 88px;
-}
-[data-view="medium"] .file-badge {
-  width: 40px;
-  height: 50px;
-}
-[data-view="medium"] .file-ext {
-  bottom: 8px;
-  font-size: 9px;
-  padding: 1px 4px;
-}
-[data-view="medium"] .file-ext.is-long {
-  font-size: 8px;
-}
-[data-view="medium"] .file-body {
-  padding-top: 18px;
-}
-[data-view="medium"] .eyebrow {
-  display: none;
-}
-
-/* Compact: just the file, the button and one line of small print. */
-[data-view="compact"] main {
-  max-width: 440px;
-  padding-top: 16px;
-}
-[data-view="compact"] :is(.file-hero, .file-body > .eyebrow, .address-row, .direct-line, .footer) {
-  display: none;
-}
-[data-view="compact"]:not(.show-how) .how {
-  display: none;
-}
-[data-view="compact"] .fineprint {
-  display: block;
-}
-[data-view="compact"] .file-name {
-  font-size: 20px;
-}
-[data-view="compact"] .file-meta {
-  margin-top: 6px;
-  font-size: 13.5px;
-}
-[data-view="compact"] .panel {
-  margin-top: 16px;
-  padding-top: 16px;
-  gap: 12px;
-}
-[data-view="compact"] .status-line {
-  min-height: 0;
-}
-[data-view="compact"] .status-indicator {
-  width: 28px;
-  height: 28px;
-}
-[data-view="compact"] .done-check {
-  width: 38px;
-  height: 38px;
-}
-[data-view="compact"] .done-facts > div:nth-child(2) {
-  display: none;
-}
-@media (min-height: 700px) and (min-width: 600px) {
-  [data-view="compact"] main {
-    padding-top: 8vh;
-  }
 }

@@ -20,7 +20,7 @@ This is a community tech demo built on [`@withautonomi/ant-browser-sdk`](https:/
 ### Download link format
 
 ```
-https://<host>/d/?a=<address>&n=<file name>&s=<size in bytes>&v=<view>
+https://<host>/d/?a=<address>&n=<file name>&s=<size in bytes>
 ```
 
 | Param | Required | Notes |
@@ -28,9 +28,8 @@ https://<host>/d/?a=<address>&n=<file name>&s=<size in bytes>&v=<view>
 | `a` | yes | 64 lowercase hex characters: a public file's DataMap address. |
 | `n` | recommended | File name. The network doesn't store names, so the link carries it. It's sanitised on arrival. |
 | `s` | optional | Size shown before connecting. It's replaced by the verified size from the network. |
-| `v` | optional | Page size: `full` (default), `medium`, or `compact`. |
 
-The generator also accepts `/?a=…&n=…&v=…` to open with the form already filled in.
+The generator also accepts `/?a=…&n=…` to open with the form already filled in.
 
 ## Development
 

@@ -129,7 +129,8 @@ All snippets use **inline styles only** (no external CSS, no script), so they pa
 - The first line reads "Download <file name>", shortened in the middle past 40 characters. The second line is a small, dimmed "Powered by Autonomi" credit with the Autonomi logo as an inline SVG, so the file name stays the most prominent text.
 - **Dark** uses the same markup with a dark background and light text.
 - **Minimal** is a plain underlined link with no room for a second line, so the credit goes in the label: `Download my-mod-v1.2.zip from Autonomi (312 MB)`.
-- Add `title="Free to download. Served by the Autonomi network, not this site."` to each variant.
+- Add `title="Free to download. Served by the Autonomi network, not this site. Autonomi address: <address>"` to each variant. A link has no `alt` text, so `title` carries the full address, though it can't be copied and phones don't show it.
+- Optional, off by default: a line under the button showing the **full** address, for publishers who want it readable and copyable on their own page if the download page ever moves. Never shorten it there: a shortened address can't be used.
 - Omit the size span if the size is unknown.
 - Pick the final colours from Autonomi's public branding. Check that their brand guidelines allow the logo in the credit line.
 
@@ -148,7 +149,7 @@ All snippets use **inline styles only** (no external CSS, no script), so they pa
 **On load:**
 
 1. Parse and validate the params (section 4). Invalid address → error state with a link back to the generator.
-2. Render the file card: name, size (from `s` if present), a shortened address with a copy button, and the line "This file will be fetched directly from Autonomi nodes by your browser."
+2. Render the file card: name, size (from `s` if present), and the line "This file will be fetched directly from Autonomi nodes by your browser."
 3. Run a capability check with `getBrowserCapabilities()`. If `operations.download` isn't available, show which features are missing.
 4. **Start connecting immediately** (`AutonomiClient.connect()`). Keep the Download button disabled with the label "Connecting…" until the connection is ready.
 5. Once connected, call `openFile()` to fetch the verified size, update the card, and close the reader. Size over 1 GB in a browser that can't stream to disk (`getBrowserCapabilities().operations.streamAndSave`) → blocked state. Without streaming, on a phone (`navigator.deviceMemory <= 4` or a mobile user agent) with a file over 300 MB, show a memory warning without blocking.
@@ -191,6 +192,7 @@ Expose `controller.abort()` as a Cancel button while downloading.
 
 **Other content on the page:**
 
+- An "Or download it with the Autonomi app" section under the download controls: what the address is, the full address with a copy button, a link to the [Autonomi App](https://docs.autonomi.com/node/downloads), the steps (*Files*, *Download*, paste the address), and a note that the app also runs nodes but you don't need to run one. Link to that docs page, not `autonomi.com/node`, which is about starting a node and calls its download the Node Launchpad.
 - A short "How this works" box: files on Autonomi are split into encrypted chunks spread across nodes. Your browser finds the nodes holding this file, fetches the chunks directly, verifies them and reassembles the file. No server sends you the file, and downloading is free.
 - A privacy line: "The nodes serving the file can see your IP address, like any peer-to-peer download."
 - Links: "Make your own button" (generator), "Powered by Autonomi" (`https://autonomi.com/?ref=download-button-demo`).

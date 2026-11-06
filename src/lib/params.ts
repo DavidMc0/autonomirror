@@ -2,21 +2,12 @@ import { isAddress } from "./address";
 
 export const MAX_NAME_LENGTH = 200;
 
-/** Download page size, chosen by the publisher. "full" is the default and is omitted from URLs. */
-export type PageView = "full" | "medium" | "compact";
-export const PAGE_VIEWS: readonly PageView[] = ["full", "medium", "compact"];
-
-export function parseView(raw: string | null): PageView {
-  return PAGE_VIEWS.includes(raw as PageView) ? (raw as PageView) : "full";
-}
-
 export interface DownloadParams {
   address: string;
   name: string;
   /** False when `n` was missing or sanitised to nothing, so `name` is the generated default. */
   nameProvided: boolean;
   size?: number;
-  view: PageView;
 }
 
 export type ParseResult =
@@ -62,7 +53,6 @@ export function parseDownloadParams(search: string | URLSearchParams): ParseResu
       name: name || defaultName(rawAddress),
       nameProvided: name.length > 0,
       size: parseSize(q.get("s")),
-      view: parseView(q.get("v")),
     },
   };
 }
@@ -78,13 +68,12 @@ export function encodeParam(value: string): string {
 /** `siteBase` is the absolute URL of the site root, ending in "/". */
 export function buildDownloadUrl(
   siteBase: string,
-  p: { address: string; name?: string; size?: number; view?: PageView },
+  p: { address: string; name?: string; size?: number },
 ): string {
   const parts = [`a=${p.address}`];
   const name = p.name ? sanitizeName(p.name) : "";
   if (name) parts.push(`n=${encodeParam(name)}`);
   if (p.size !== undefined && Number.isSafeInteger(p.size) && p.size >= 0) parts.push(`s=${p.size}`);
-  if (p.view && p.view !== "full") parts.push(`v=${p.view}`);
   return `${withSlash(siteBase)}d/?${parts.join("&")}`;
 }
 

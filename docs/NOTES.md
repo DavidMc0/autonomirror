@@ -73,3 +73,7 @@ A shared log for everyone working on this repo. Add entries as `- YYYY-MM-DD [Au
   - Possible gap: the two peers that served these chunks to the CLI are on hosting ranges (51.83.226.253 is `PCI-WAW1`, 5.78.192.95 is Hetzner). #264 says hosts with public interfaces are unchanged, because router discovery finds nothing. If other holders of these chunks are also on such hosts, the fix won't reach them, for example where a firewall blocks the random browser port. This is our inference, not upstream's finding, and is worth asking on #10.
   - Retest when an ant-node release after v0.23.1 includes #264 and has had time to spread: run the probe on `ee8e1349…6b77`, then the full 20 GiB `aa929282…7cd4`.
 
+- 2026-11-06 [Claude] At David's request, simplified the download page and the button.
+  - Removed the download page sizes (`?v=full|medium|compact`). There's now one page, and old links with `&v=` still work: the parameter is ignored.
+  - The download page now has an "Or download it with the Autonomi app" section with the full address, a Copy button, the app steps and a note that no node is needed. It links to docs.autonomi.com/node/downloads rather than autonomi.com/node, which is aimed at starting a node and calls its download the Node Launchpad.
+  - The shortened address under the button couldn't do its job, because a hover tooltip can't be copied and phones don't show it. The full address now always goes in the button's `title`. The optional line under the button shows the whole address and is **off by default**, which reverses the earlier default.
