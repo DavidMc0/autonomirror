@@ -25,8 +25,3 @@ export function hexCount(input: string): number {
   const cleaned = input.toLowerCase().replace(/\s+/g, "").replace(/^0x/, "");
   return (cleaned.match(/[0-9a-f]/g) ?? []).length;
 }
-
-/** "711c7e…b7078a" */
-export function shortenAddress(address: string, head = 6, tail = 6): string {
-  return address.length <= head + tail + 1 ? address : `${address.slice(0, head)}…${address.slice(-tail)}`;
-}

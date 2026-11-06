@@ -3,7 +3,7 @@ import "./generator.css";
 import { extractAddress, hexCount } from "./lib/address";
 import { describeError, getClient, MAX_BUFFERED_DOWNLOAD_BYTES } from "./lib/client";
 import { formatBytes, formatExactBytes } from "./lib/format";
-import { buildDownloadUrl, parseDownloadParams, parseView, sanitizeName, siteBaseUrl, type PageView } from "./lib/params";
+import { buildDownloadUrl, parseDownloadParams, sanitizeName, siteBaseUrl } from "./lib/params";
 import { htmlSnippet, markdownSnippet, type ButtonStyle, type SnippetOptions } from "./lib/snippets";
 import { $, bindCopy } from "./lib/ui";
 import { initThemeToggle } from "./lib/theme";
@@ -68,7 +68,7 @@ function tidyAddress(): void {
     onAddressInput();
   }
 }
-document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="view"], input[name="host"], #show-address').forEach((el) =>
+document.querySelectorAll<HTMLInputElement>('input[name="style"], input[name="host"], #show-address').forEach((el) =>
   el.addEventListener("change", render),
 );
 
@@ -215,15 +215,18 @@ function currentSize(): number | undefined {
 
 /** The preview falls back to a placeholder name until one is typed. */
 function snippetOptions(): SnippetOptions {
-  const showAddress = $<HTMLInputElement>("show-address").checked;
-  const addr = address() || SAMPLES.lucky.address;
-  return { fileName: fileName() || PLACEHOLDER_NAME, size: currentSize(), address: showAddress ? addr : undefined };
+  return {
+    fileName: fileName() || PLACEHOLDER_NAME,
+    size: currentSize(),
+    address: address() || SAMPLES.lucky.address,
+    showAddress: $<HTMLInputElement>("show-address").checked,
+  };
 }
 
 function downloadUrl(): string | null {
   const addr = address();
   if (!addr) return null;
-  return buildDownloadUrl(siteBase, { address: addr, name: fileName(), size: currentSize(), view: radio<PageView>("view") });
+  return buildDownloadUrl(siteBase, { address: addr, name: fileName(), size: currentSize() });
 }
 
 function renderPreview(): void {
@@ -327,15 +330,13 @@ initUpload((file) => {
   render();
 });
 
-// ------------------------------------------------------------------ boot: optional pre-fill from ?a=&n=&v=
+// ------------------------------------------------------------------ boot: optional pre-fill from ?a=&n=
 
 const q = new URLSearchParams(location.search);
 const preAddress = extractAddress(q.get("a") ?? "");
 if (preAddress) {
   addressInput.value = preAddress;
   nameInput.value = sanitizeName(q.get("n") ?? "");
-  const view = parseView(q.get("v"));
-  document.querySelector<HTMLInputElement>(`input[name="view"][value="${view}"]`)!.checked = true;
   onAddressInput();
   runCheck();
 } else {

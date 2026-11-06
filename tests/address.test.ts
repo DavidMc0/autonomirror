@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractAddress, hexCount, isAddress, shortenAddress } from "../src/lib/address";
+import { extractAddress, hexCount, isAddress } from "../src/lib/address";
 
 const A = "711c7e20006ff3e0ac6c1f3063286a0c1a3e4c409642e8c526173fa60bb7078a";
 
@@ -45,14 +45,10 @@ describe("hexCount", () => {
   });
 });
 
-describe("isAddress / shortenAddress", () => {
+describe("isAddress", () => {
   it("validates strictly", () => {
     expect(isAddress(A)).toBe(true);
     expect(isAddress(A.toUpperCase())).toBe(false);
     expect(isAddress(` ${A}`)).toBe(false);
-  });
-  it("shortens", () => {
-    expect(shortenAddress(A)).toBe("711c7e…b7078a");
-    expect(shortenAddress("abc")).toBe("abc");
   });
 });

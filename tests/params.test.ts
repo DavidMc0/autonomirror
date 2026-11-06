@@ -37,13 +37,13 @@ describe("parseDownloadParams", () => {
   it("parses a full link", () => {
     expect(parseDownloadParams(`?a=${A}&n=lucky.jpg&s=138931`)).toEqual({
       ok: true,
-      params: { address: A, name: "lucky.jpg", nameProvided: true, size: 138931, view: "full" },
+      params: { address: A, name: "lucky.jpg", nameProvided: true, size: 138931 },
     });
   });
 
   it("defaults the name and ignores a bad size", () => {
     const r = parseDownloadParams(`?a=${A}&s=12abc`);
-    expect(r).toEqual({ ok: true, params: { address: A, name: defaultName(A), nameProvided: false, size: undefined, view: "full" } });
+    expect(r).toEqual({ ok: true, params: { address: A, name: defaultName(A), nameProvided: false, size: undefined } });
     expect(defaultName(A)).toBe("autonomi-711c7e20.bin");
   });
 
@@ -81,17 +81,13 @@ describe("buildDownloadUrl", () => {
     (name) => {
       const url = new URL(buildDownloadUrl(BASE, { address: A, name, size: 42 }));
       const r = parseDownloadParams(url.search);
-      expect(r).toEqual({ ok: true, params: { address: A, name: sanitizeName(name), nameProvided: true, size: 42, view: "full" } });
+      expect(r).toEqual({ ok: true, params: { address: A, name: sanitizeName(name), nameProvided: true, size: 42 } });
     },
   );
 
-  it("adds the page view only when it isn't the default", () => {
-    expect(buildDownloadUrl(BASE, { address: A, view: "compact" })).toBe(`${BASE}d/?a=${A}&v=compact`);
-    expect(buildDownloadUrl(BASE, { address: A, view: "full" })).toBe(`${BASE}d/?a=${A}`);
-    const r = parseDownloadParams(`?a=${A}&v=medium`);
-    expect(r.ok && r.params.view).toBe("medium");
-    const bad = parseDownloadParams(`?a=${A}&v=huge`);
-    expect(bad.ok && bad.params.view).toBe("full");
+  it("ignores the old page size parameter, so existing links keep working", () => {
+    const r = parseDownloadParams(`?a=${A}&v=compact`);
+    expect(r).toEqual({ ok: true, params: { address: A, name: defaultName(A), nameProvided: false, size: undefined } });
   });
 
   it("omits empty name and size, and adds a missing trailing slash", () => {

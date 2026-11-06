@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ADDRESS_HINT, ADDRESS_LABEL, BUTTON_STYLES, addressLine, escapeHtml, shortAddress, escapeMarkdown, htmlSnippet, markdownSnippet, shortenName } from "../src/lib/snippets";
+import { ADDRESS_HINT, ADDRESS_LABEL, BUTTON_STYLES, addressLine, escapeHtml, escapeMarkdown, htmlSnippet, markdownSnippet, shortenName } from "../src/lib/snippets";
 import { buildDownloadUrl } from "../src/lib/params";
 
 const A = "711c7e20006ff3e0ac6c1f3063286a0c1a3e4c409642e8c526173fa60bb7078a";
@@ -86,42 +86,46 @@ describe("escapeHtml", () => {
   });
 });
 
-describe("address line", () => {
-  it("shortens the address and keeps the full form in the title", () => {
-    expect(shortAddress(A)).toBe("711c7e20…b7078a");
+describe("full address", () => {
+  it("shows the whole address in the line, so it can be read and copied", () => {
     const doc = new DOMParser().parseFromString(addressLine(A), "text/html");
-    const span = doc.querySelector("span[title]")!;
-    expect(span.getAttribute("title")).toBe(`${A}. ${ADDRESS_HINT}`);
-    expect(ADDRESS_HINT).toBe("The file can also be downloaded through the Autonomi app using this address.");
-    expect(doc.body.textContent).toBe(`${ADDRESS_LABEL} 711c7e20…b7078a`);
+    expect(doc.body.textContent).toBe(`${ADDRESS_LABEL} ${A}`);
+    expect(doc.querySelector("div")!.getAttribute("title")).toBe(ADDRESS_HINT);
   });
 
-  it("is only added when an address is passed (the generator passes one unless the toggle is off)", () => {
+  it.each(BUTTON_STYLES)("%s: always goes in the button's hover text when known", (style) => {
+    const html = htmlSnippet(style, URL_, { fileName: "lucky.jpg", address: A });
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    expect(doc.querySelector("a")!.getAttribute("title")).toContain(`${ADDRESS_LABEL} ${A}`);
+    expect(doc.querySelector("a")!.nextElementSibling).toBeNull();
+  });
+
+  it("adds no line unless asked to", () => {
     for (const style of BUTTON_STYLES) {
-      expect(htmlSnippet(style, URL_, { fileName: "lucky.jpg" })).not.toContain(ADDRESS_LABEL);
+      expect(htmlSnippet(style, URL_, { fileName: "lucky.jpg", showAddress: true })).not.toContain(ADDRESS_LABEL);
     }
-    expect(markdownSnippet(URL_, { fileName: "lucky.jpg" })).not.toContain(ADDRESS_LABEL);
+    expect(markdownSnippet(URL_, { fileName: "lucky.jpg", address: A })).not.toContain(ADDRESS_LABEL);
   });
 
   it.each(BUTTON_STYLES)("%s: goes under one unchanged link, plain HTML with no script", (style) => {
-    const plain = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1 });
-    const html = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1, address: A });
+    const plain = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1, address: A });
+    const html = htmlSnippet(style, URL_, { fileName: "lucky.jpg", size: 1, address: A, showAddress: true });
     expect(html).toContain(plain);
     expect(html).not.toMatch(/<script|<style|<link|class=|id=|on\w+=|javascript:/i);
     const doc = new DOMParser().parseFromString(html, "text/html");
     expect(doc.querySelectorAll("a")).toHaveLength(1);
-    expect(doc.querySelector("a")!.nextElementSibling!.textContent).toContain(ADDRESS_LABEL);
+    expect(doc.querySelector("a")!.nextElementSibling!.textContent).toContain(`${ADDRESS_LABEL} ${A}`);
   });
 
   it("adds the full address to Markdown as a code span", () => {
-    expect(markdownSnippet(URL_, { fileName: "lucky.jpg", address: A })).toMatch(new RegExp(`\\)\\n\\n${ADDRESS_LABEL} \`${A}\`$`));
+    expect(markdownSnippet(URL_, { fileName: "lucky.jpg", address: A, showAddress: true })).toContain(`)\n\n${ADDRESS_LABEL} \`${A}\``);
   });
 });
 
 describe("generator defaults", () => {
-  it("shows the address line by default", async () => {
+  it("leaves the address line off by default", async () => {
     const { readFileSync } = await import("node:fs");
     const html = readFileSync(`${process.cwd()}/index.html`, "utf8");
-    expect(html).toMatch(/<input type="checkbox" id="show-address" checked \/>/);
+    expect(html).toContain('<input type="checkbox" id="show-address" />');
   });
 });

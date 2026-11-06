@@ -11,27 +11,23 @@ export const MAX_LABEL_NAME = 40;
 export interface SnippetOptions {
   fileName: string;
   size?: number;
-  /** When set, a small "Autonomi address: …" line goes under the button, with the full address and a hint about the Autonomi app on hover. */
+  /** The file's full address. It goes in the button's hover text. */
   address?: string;
+  /** Also show the full address in a line under the button, where it can be read and copied. */
+  showAddress?: boolean;
 }
 
 export const ADDRESS_LABEL = "Autonomi address:";
 export const ADDRESS_HINT = "The file can also be downloaded through the Autonomi app using this address.";
-
-/** "711c7e20…b7078a": enough to recognise, full form in the title. */
-export function shortAddress(address: string): string {
-  return address.length > 16 ? `${address.slice(0, 8)}…${address.slice(-6)}` : address;
-}
 
 /**
  * Plain HTML (no script): the file's network address, so it can still be fetched
  * with the Autonomi app if the download page ever moves or goes away.
  */
 export function addressLine(address: string): string {
-  const full = escapeHtml(`${address}. ${ADDRESS_HINT}`);
   return (
-    `<div style="margin-top:4px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;opacity:.7">` +
-    `${ADDRESS_LABEL} <span title="${full}">${escapeHtml(shortAddress(address))}</span></div>`
+    `<div title="${escapeHtml(ADDRESS_HINT)}" style="margin-top:4px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;opacity:.7;overflow-wrap:anywhere">` +
+    `${ADDRESS_LABEL} ${escapeHtml(address)}</div>`
   );
 }
 
@@ -85,14 +81,15 @@ const sizeLabel = (size?: number) => (size === undefined ? "" : formatBytes(size
 
 export function htmlSnippet(style: ButtonStyle, url: string, options: SnippetOptions): string {
   const button = buttonHtml(style, url, options);
-  return options.address ? `<div>\n${button}\n${addressLine(options.address)}\n</div>` : button;
+  return options.address && options.showAddress ? `<div>\n${button}\n${addressLine(options.address)}\n</div>` : button;
 }
 
-function buttonHtml(style: ButtonStyle, url: string, { fileName, size }: SnippetOptions): string {
+function buttonHtml(style: ButtonStyle, url: string, { fileName, size, address }: SnippetOptions): string {
   const href = escapeHtml(url);
   const sizeText = sizeLabel(size);
   // A shortened name is still readable in full on hover.
-  const title = shortenName(fileName) !== fileName ? `${fileName}. ${BUTTON_TITLE}` : BUTTON_TITLE;
+  const named = shortenName(fileName) !== fileName ? `${fileName}. ${BUTTON_TITLE}` : BUTTON_TITLE;
+  const title = address ? `${named} ${ADDRESS_LABEL} ${address}` : named;
   const attrs = `href="${href}" target="_blank" rel="noopener" title="${escapeHtml(title)}"`;
 
   if (style === "minimal") {
@@ -115,9 +112,9 @@ function buttonHtml(style: ButtonStyle, url: string, { fileName, size }: Snippet
   ].join("\n");
 }
 
-export function markdownSnippet(url: string, { fileName, size, address }: SnippetOptions): string {
+export function markdownSnippet(url: string, { fileName, size, address, showAddress }: SnippetOptions): string {
   const sizeText = sizeLabel(size);
   const link = `[⬇ ${escapeMarkdown(linkLabel(fileName))}${sizeText ? ` (${sizeText})` : ""}](${url})`;
   // Markdown has no hover title, so the full address goes in a code span.
-  return address ? `${link}\n\n${ADDRESS_LABEL} \`${address}\`` : link;
+  return address && showAddress ? `${link}\n\n${ADDRESS_LABEL} \`${address}\`` : link;
 }
