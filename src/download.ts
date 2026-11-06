@@ -1,7 +1,6 @@
 import "./styles.css";
 import "./download.css";
 import { getBrowserCapabilities, type AutonomiClient, type ProgressEvent } from "@withautonomi/ant-browser-sdk";
-import { shortenAddress } from "./lib/address";
 import {
   canStreamToDisk,
   closeClient,
@@ -82,25 +81,14 @@ if (!parsed.ok) {
 }
 
 function renderFileCard(): void {
-  const { address, name, view } = params;
-  document.documentElement.dataset.view = view;
-  const how = $<HTMLDetailsElement>("how");
-  how.open = view === "full";
-  $("show-how").addEventListener("click", (e) => {
-    e.preventDefault();
-    document.documentElement.classList.add("show-how");
-    how.open = true;
-    how.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  const { address, name } = params;
   document.title = `${name} · Autonomi Download`;
   setText($("file-name"), name);
   const ext = /\.([a-z0-9]{1,5})$/i.exec(name)?.[1];
   setText($("file-ext"), (ext ?? "file").toUpperCase());
   $("file-ext").classList.toggle("is-long", (ext?.length ?? 4) > 3);
 
-  const short = $("address-short");
-  setText(short, shortenAddress(address, 8, 8));
-  short.title = address;
+  setText($("address-full"), address);
   bindCopy($<HTMLButtonElement>("copy-address"), () => address);
 
   renderSize();
